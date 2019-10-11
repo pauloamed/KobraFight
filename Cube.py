@@ -1,6 +1,7 @@
 import pygame
+from globals import *
 
-class cube(object):
+class Cube(object):
     def __init__(self,start,dirnx=1,dirny=0,color=(255,0,0)):
         self.pos = start # tupla com coord x e coord y (x, y)
         self.dirnx = 1
@@ -14,7 +15,7 @@ class cube(object):
         self.pos = (self.pos[0] + self.dirnx, self.pos[1] + self.dirny)
 
     def draw(self, surface, eyes=False):
-        dis = self.w // self.rows
+        dis = SIZE // GRID
         i = self.pos[0]
         j = self.pos[1]
 
