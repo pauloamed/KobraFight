@@ -16,8 +16,7 @@ class Cube(object):
 
     def draw(self, surface, eyes=False):
         dis = SIZE // GRID
-        i = self.pos[0]
-        j = self.pos[1]
+        i, j = self.pos
 
         pygame.draw.rect(surface, self.color, (i*dis+1,j*dis+1, dis-2, dis-2))
         if eyes: # quero desenhar os olhos

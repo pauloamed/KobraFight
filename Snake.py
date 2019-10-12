@@ -12,12 +12,7 @@ class Snake(object):
         self.body.append(self.head) # body (lista com blocos) sempre tem a head
         self.dirnx = 0 # comeco nao me movendo na vertical
         self.dirny = 1 # comeco me movendo pra direita
-        self.allowedKeys = [
-            (pygame.K_LEFT, (-1, 0)),
-            (pygame.K_RIGHT, (1, 0)),
-            (pygame.K_UP, (0, -1)),
-            (pygame.K_DOWN, (0, 1)),
-        ]
+        self.alive = True
         self.turns = {} # dicionario guardando onde o mudou de direcao e pra onde
 
     def move(self):
