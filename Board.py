@@ -10,7 +10,7 @@ from Cube import Cube
 from globals import *
 from Snack import Snack
 
-class Board():
+class Board(object):
 
     def __init__(self, size, grid):
         self.grid = grid
@@ -40,17 +40,19 @@ class Board():
             pos = self.getValidPos()
         self.snacks[pos] = Snack(pos)
 
-    def update(self):
+    def update(self, moves):
 
-        for snake in self.snakes.values():
-            snake.move()
+        for idUser in self.snakes:
+            if idUser in moves:
+                self.snakes[idUser].move(self.grid, self.size, moves[idUser])
+            else:
+                self.snakes[idUser].move(self.grid, self.size)
 
-            self.eatSnacks()
-            self.checkCollisions()
+        self.eatSnacks()
+        self.checkCollisions()
 
     def eatSnacks(self):
         for snake in self.snakes.values():
-            print(snake.body[0].pos, self.snacks)
             if snake.body[0].pos in self.snacks:
                 snake.addCube()
                 del self.snacks[snake.body[0].pos]
