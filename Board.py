@@ -19,7 +19,10 @@ class Board(object):
         self.snacks = {}
 
     def addSnake(self, idUser):
-        self.snakes[idUser] = Snake(GREEN_COLOR, self.getValidPos())
+        color = [random.randint(0, 256) for _ in range(3)]
+        self.snakes[idUser] = Snake(color, self.getValidPos())
+
+    # def isPosVal()
 
     def getValidPos(self):
         positions = {c.pos for snake in self.snakes.values() for c in snake.body} # recupera o corpo da cobra (lista de posicoes)

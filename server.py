@@ -21,8 +21,9 @@ clock = pygame.time.Clock() # clock
 d = dict()
 
 board = Board(SIZE, GRID)
+port = 12346
 
-port = 65431
+checkpoint_500ms = time.time()
 
 read_list = []
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -32,10 +33,16 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     read_list.append(s)
 
 
-    while True :
+    while True:
         # pygame.time.delay(50) # pausa em milisegundos
         clock.tick(10) # sincronizacao
         readable, writeable, error = select.select(read_list,[],[])
+
+        # if time.time() -
+        if time.time() - checkpoint_500ms >= 0.5:
+            board.addSnack()
+            checkpoint_500ms = time.time()
+
         for sock in readable:
             if sock is s:
                 conn, info = sock.accept()
@@ -48,13 +55,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
             else:
                 id_user = d[sock.getpeername()]
-                data = sock.recv(1024)
+                data = sock.recv(1048576)
                 # print(data)
                 # print(board.snakes)
                 if data: # se recebi algo valido, imprimo oq recebi e envio de volta
-                    if len(board.snacks) == 0:
-                        board.addSnack()
-
                     board.update({id_user: data.decode('ascii')})
                     # board.draw(win)
                     boardEncoded = pickle.dumps(board)

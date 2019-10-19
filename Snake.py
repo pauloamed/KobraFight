@@ -6,7 +6,7 @@ class Snake(object):
         # pos: posicao inicial
         self.body = []
         self.color = color # cor da cobrinha
-        self.head = Cube(pos) # cubo indicando a cabeca
+        self.head = Cube(pos, color) # cubo indicando a cabeca
         self.body.append(self.head) # body (lista com blocos) sempre tem a head
         self.dirnx = 0 # comeco nao me movendo na vertical
         self.dirny = 1 # comeco me movendo pra direita
@@ -53,19 +53,20 @@ class Snake(object):
                 c.pos = (0 , c.pos[1])
             if c.pos[1] >= grid:
                 c.pos = (c.pos[0], 0)
-        
+
     def reset(self, pos):
-        self.head = Cube(pos)
+        self.head = Cube(pos, self.color)
         self.body = [self.head]
         self.turns = {}
         self.dirnx = 0
         self.dirny = 1
 
+    # def initSnake(self, board):
 
     def addCube(self):
         tail = self.body[-1] # reucpernado o ultimo cubo
         dx, dy = tail.dirnx, tail.dirny # direcoes do ulimo cubo
-        self.body.append(Cube((tail.pos[0]-dx, tail.pos[1]-dy))) # TODO
+        self.body.append(Cube((tail.pos[0]-dx, tail.pos[1]-dy), self.color))
         self.body[-1].dirnx = dx
         self.body[-1].dirny = dy
 

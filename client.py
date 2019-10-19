@@ -37,8 +37,8 @@ def getNewDir():
 
     return None
 
-HOST = '127.0.0.1'  # The server's hostname or IP address
-PORT = 65431     # The port used by the server
+HOST = 'localhost'  # The server's hostname or IP address
+PORT = 12346    # The port used by the server
 
 win = pygame.display.set_mode((500, 500)) # cria o tabuleiro (janela)
 clock = pygame.time.Clock() # clock
@@ -46,14 +46,14 @@ clock = pygame.time.Clock() # clock
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.connect((HOST, PORT))
     while True:
-        pygame.time.delay(40) # pausa em milisegundos
+        pygame.time.delay(50) # pausa em milisegundos
         clock.tick(10) # sincronizacao
         newDir = getNewDir()
         if newDir:
             s.sendall(newDir.encode('ascii'))
         else:
             s.sendall("no".encode('ascii'))
-        data = s.recv(1024)
+        data = s.recv(1048576)
         # print(data)
         board = pickle.loads(data)
         # print(board.snakes)

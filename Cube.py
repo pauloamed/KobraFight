@@ -2,7 +2,7 @@ import pygame
 from globals import *
 
 class Cube(object):
-    def __init__(self,start,dirnx=1,dirny=0,color=(255,0,0)):
+    def __init__(self,start,color,dirnx=1,dirny=0):
         self.pos = start # tupla com coord x e coord y (x, y)
         self.dirnx = 1
         self.dirny = 0
