@@ -15,15 +15,14 @@ import sys
 
 import pickle
 
-win = pygame.display.set_mode((500, 500)) # cria o tabuleiro (janela)
+# win = pygame.display.set_mode((500, 500)) # cria o tabuleiro (janela)
 clock = pygame.time.Clock() # clock
+
+d = dict()
 
 board = Board(SIZE, GRID)
 
-board.addSnake(0)
-board.addSnack()
-
-port = 65432
+port = 65431
 
 read_list = []
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -42,16 +41,22 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 conn, info = sock.accept()
                 read_list.append(conn)
                 print("connection received from ", info)
+
+                d[info] = len(d)
+
+                board.addSnake(d[info])
+
             else:
+                id_user = d[sock.getpeername()]
                 data = sock.recv(1024)
-                print(data)
+                # print(data)
                 # print(board.snakes)
                 if data: # se recebi algo valido, imprimo oq recebi e envio de volta
                     if len(board.snacks) == 0:
                         board.addSnack()
 
-                    board.update({0: data.decode('ascii')})
-                    board.draw(win)
+                    board.update({id_user: data.decode('ascii')})
+                    # board.draw(win)
                     boardEncoded = pickle.dumps(board)
                     sock.send(boardEncoded)
                 else:

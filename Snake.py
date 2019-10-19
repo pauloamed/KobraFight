@@ -32,40 +32,28 @@ class Snake(object):
 
         for i, c in enumerate(self.body):
             p = c.pos # recupera posicao do cubo
+            dirx, diry = None, None
+
             if p in self.turns: # se a posicao eh uma posicao de trocar de direcao
                 turn = self.turns[p] # recupera a 'nova' direcao
                 if i == len(self.body) - 1: # se to no rabo
                     self.turns.pop(p) # apago a mudada de direcao
-                c.move(turn[0],turn[1]) # mova o cubo pra sua direcao
-                dirnx, dirny = turn
-                if dirnx == -1 and c.pos[0] <= 0:
-                    c.pos = (grid-1, c.pos[1]) # se tenho q ir pra esq e
-                elif dirnx == 1 and c.pos[0] >= grid-1:
-                    c.pos = (0,c.pos[1])
-                elif dirny == 1 and c.pos[1] >= grid-1:
-                    c.pos = (c.pos[0], 0)
-                elif dirny == -1 and c.pos[1] <= 0:
-                    c.pos = (c.pos[0],grid-1)
-                # else:
-                #     c.move(dirnx,dirny)
-            else: # se nao to numa posicao de trocar de direcao
-                if c.dirnx == -1 and c.pos[0] <= 0:
-                    c.pos = (grid-1, c.pos[1]) # se tenho q ir pra esq e
-                elif c.dirnx == 1 and c.pos[0] >= grid-1:
-                    c.pos = (0,c.pos[1])
-                elif c.dirny == 1 and c.pos[1] >= grid-1:
-                    c.pos = (c.pos[0], 0)
-                elif c.dirny == -1 and c.pos[1] <= 0:
-                    c.pos = (c.pos[0],grid-1)
-                else:
-                    c.move(c.dirnx,c.dirny)
-                # if c.pos[0] < 0: c.pos = (GRID-1, c.pos[1])
-                # if c.pos[0] == GRID: c.pos = (0, c.pos[1])
-                # if c.pos[1] < 0: c.pos = (c.pos[0], GRID-1)
-                # if c.pos[1] == GRID: c.pos = (c.pos[0], 0)
+                dirx, diry = turn
+            else:
+                dirx = c.dirnx
+                diry = c.dirny
 
+            c.move(dirx, diry)
 
-
+            if c.pos[0] < 0:
+                c.pos = (grid-1, c.pos[1])
+            if c.pos[1] < 0:
+                c.pos = (c.pos[0], grid-1)
+            if c.pos[0] >= grid:
+                c.pos = (0 , c.pos[1])
+            if c.pos[1] >= grid:
+                c.pos = (c.pos[0], 0)
+        
     def reset(self, pos):
         self.head = Cube(pos)
         self.body = [self.head]
