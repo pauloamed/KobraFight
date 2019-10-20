@@ -2,11 +2,7 @@ import math
 import pygame
 import tkinter as tk
 
-from Snake import Snake
-from Cube import Cube
-from globals import *
-from Snack import Snack
-from Board import Board
+from kobra_fight.Board import Board
 
 import socket
 import select
@@ -92,7 +88,7 @@ clock = pygame.time.Clock() # clock
 
 d = dict()
 
-board = Board(SIZE, GRID)
+board = Board()
 port = 12347
 
 checkpoint_500ms = time.time()

@@ -1,18 +1,13 @@
-from globals import *
-
 import math
 import pygame
 import tkinter as tk
 import random
 
-from Snake import Snake
-from Cube import Cube
-from globals import *
-from Snack import Snack
+from .snake_game import *
 
 class Board(object):
 
-    def __init__(self, size, grid):
+    def __init__(self, size=SIZE, grid=GRID):
         self.grid = grid
         self.size = size
         self.snakes = {}
@@ -144,10 +139,10 @@ class Board(object):
         surface.fill((0,0,0))
 
         for snake in self.snakes.values():
-            snake.draw(surface)
+            snake.draw(surface, self.size, self.grid)
 
         for snack in self.snacks.values():
-            snack.draw(surface)
+            snack.draw(surface, self.size, self.grid)
 
         self.drawGrid(surface)
         pygame.display.update()

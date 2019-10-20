@@ -3,12 +3,7 @@ import pygame
 import tkinter as tk
 from tkinter import simpledialog
 
-from Snake import Snake
-from Cube import Cube
-from globals import *
-from Snack import Snack
-from Board import Board
-from dialogs import LoginDialog
+from kobra_fight import Board, LoginDialog
 
 import socket
 import select

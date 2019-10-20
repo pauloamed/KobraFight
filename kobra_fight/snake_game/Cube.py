@@ -1,5 +1,4 @@
 import pygame
-from globals import *
 
 class Cube(object):
     def __init__(self,start,color,dirnx,dirny):
@@ -15,8 +14,8 @@ class Cube(object):
 
         self.pos = (self.pos[0] + self.dirnx, self.pos[1] + self.dirny)
 
-    def draw(self, surface, eyes=False):
-        dis = SIZE // GRID
+    def draw(self, surface, size, grid, eyes=False):
+        dis = size // grid
         i, j = self.pos
 
         pygame.draw.rect(surface, self.color, (i*dis+1,j*dis+1, dis-2, dis-2))

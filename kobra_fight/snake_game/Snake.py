@@ -1,4 +1,4 @@
-from Cube import Cube
+from .Cube import Cube
 import pygame
 
 class Snake(object):
@@ -81,6 +81,6 @@ class Snake(object):
         self.body.append(Cube(newPos, self.color, dx, dy))
 
 
-    def draw(self, surface):
+    def draw(self, surface, size, grid):
         for i, c in enumerate(self.body):
-            c.draw(surface, eyes=(i==0))
+            c.draw(surface, size, grid, eyes=(i==0))
