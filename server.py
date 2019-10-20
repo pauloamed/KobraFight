@@ -41,23 +41,26 @@ def manageInput(read_list, s, d):
             data = sock.recv(1048576)
 
             if data:
+                data = data.decode('ascii')
                 id_user = d[sock.getpeername()]
-                move = data.decode('ascii')
-                moves.append((id_user, move))
-                socks_ok.append(sock)
+
+                if data == 'out':
+                    lost_connections.append(d[sock.getpeername()])
+                    socks_lc.append(sock)
+                else:
+                    move = data
+                    moves.append((id_user, move))
+                    socks_ok.append(sock)
+
             else:
-                print(sock)
-                print([readable, writeable, error])
-                # print(d[sock.getpeername()])
-                lost_connections.append(d[sock.getpeername()])
-                socks_lc.append(sock)
+                print('ERROR')
 
     return new_players, lost_connections, moves, socks_lc, socks_ok
 
 
 def manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500ms):
     for lost_con in lost_connections:
-        board.getSnake(lost_con).die()
+        board.killSnake(lost_con)
 
     for player in new_players:
         board.addSnake(player)
@@ -104,6 +107,5 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         # pygame.time.delay(50) # pausa em milisegundos
         clock.tick(10) # sincronizacao
         new_players, lost_connections, moves, socks_lc, socks_ok = manageInput(read_list, s, d)
-        # print(len(socks_ok), len(read_list))
         board, checkpoint_500ms = manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500ms)
         manageOutput(socks_lc, socks_ok, board, read_list)

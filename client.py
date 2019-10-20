@@ -25,9 +25,11 @@ allowedKeys = [
     (pygame.K_DOWN, "down")
 ]
 
+flag = True
+
 def INT_handler(sig_num, arg):
-    print(arg)
-    sys.exit(0)
+    flag = False
+    pygame.quit()
 
 signal.signal(signal.SIGINT, INT_handler)
 
@@ -41,7 +43,7 @@ def getNewDir():
     for event in pygame.event.get():
         # event: qualquer evento que acontece (mouse, qlqr tecla, etc)
         if event.type == pygame.QUIT: # se o evento for pra quitar, quita
-            print("oiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
+            flag = False
             pygame.quit()
 
     keys = pygame.key.get_pressed() # recuperando mapa de teclas
@@ -62,10 +64,15 @@ clock = pygame.time.Clock() # clock
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.connect((HOST, PORT))
-    while True:
+    while flag:
         pygame.time.delay(50) # pausa em milisegundos
         clock.tick(10) # sincronizacao
-        newDir = getNewDir()
+
+        try:
+            newDir = getNewDir()
+        except:
+            break
+            
         if newDir:
             s.sendall(newDir.encode('ascii'))
         else:
@@ -80,6 +87,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             print("Failed to load")
         board.draw(win)
 
-
+    s.sendall("out".encode('ascii'))
 
 # print('Received', repr(data))
