@@ -33,22 +33,24 @@ def manageInput(read_list, s, d):
             conn, info = sock.accept()
             read_list.append(conn)
             print("connection received from ", info)
-
-            d[info] = len(d)
-            new_players.append(d[info])
+            ip, port = info
+            cons = (ip + ':' + str(port))
+            d[cons] = len(d)
+            new_players.append(d[cons])
 
         else:
             data = sock.recv(1048576)
 
             if data:
                 data = data.decode('ascii')
-                id_user = d[sock.getpeername()]
+                head, body = data.split('_')
+                id_user = d[head]
 
-                if data == 'out':
-                    lost_connections.append(d[sock.getpeername()])
+                if body == 'OUT':
+                    lost_connections.append(id_user)
                     socks_lc.append(sock)
                 else:
-                    move = data
+                    move = body
                     moves.append((id_user, move))
                     socks_ok.append(sock)
 

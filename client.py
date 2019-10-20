@@ -64,6 +64,10 @@ clock = pygame.time.Clock() # clock
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.connect((HOST, PORT))
+
+    ip, port = s.getsockname()
+    conn = (ip + ':' + str(port))
+
     while flag:
         pygame.time.delay(50) # pausa em milisegundos
         clock.tick(10) # sincronizacao
@@ -74,9 +78,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             break
 
         if newDir:
-            s.sendall(newDir.encode('ascii'))
+            s.sendall((conn + "_" + newDir).encode('ascii'))
         else:
-            s.sendall("no".encode('ascii'))
+            s.sendall((conn + "_NO").encode('ascii'))
 
         data = s.recv(1048576)
 
@@ -87,6 +91,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         except:
             print("Failed to load")
 
-    s.sendall("out".encode('ascii'))
+    s.sendall((conn + "_OUT").encode('ascii'))
 
 # print('Received', repr(data))
