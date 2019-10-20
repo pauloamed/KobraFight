@@ -73,9 +73,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             break
 
         if newDir:
-            s.sendall((conn + "_" + newDir).encode('ascii'))
+            s.sendall((conn + "_" + newDir + ";").encode('ascii'))
         else:
-            s.sendall((conn + "_NO").encode('ascii'))
+            s.sendall((conn + "_NO" + ";").encode('ascii'))
 
         data = s.recv(1048576)
 
@@ -86,6 +86,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         except:
             print("Failed to load")
 
-    s.sendall((conn + "_OUT").encode('ascii'))
+    s.sendall((conn + "_OUT" + ";").encode('ascii'))
 
 # print('Received', repr(data))

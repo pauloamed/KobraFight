@@ -36,7 +36,7 @@ def manageInput(read_list, s, d):
             data = sock.recv(1048576)
 
             if data:
-                data = data.decode('ascii')
+                data = data.decode('ascii').split(';')[0]
                 head, body = data.split('_')
                 id_user = d[head]
 
