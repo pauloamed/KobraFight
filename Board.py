@@ -22,7 +22,6 @@ class Board(object):
         color = [random.randint(0, 256) for _ in range(3)]
         self.snakes[idUser] = Snake(color, self.getValidPos())
 
-    # def isPosVal()
 
     def getValidPos(self):
         positions = {c.pos for snake in self.snakes.values() for c in snake.body} # recupera o corpo da cobra (lista de posicoes)
@@ -41,38 +40,47 @@ class Board(object):
     def addSnack(self, pos=None):
         if pos is None:
             pos = self.getValidPos()
-        self.snacks[pos] = Snack(pos)
+            self.snacks[pos] = Snack(pos)
+        elif isinstance(pos, list):
+            for p in pos:
+                self.snacks[p] = Snack(p)
+
 
     def update(self, moves):
 
-        for idUser in self.snakes:
-            if idUser in moves:
-                self.snakes[idUser].move(self.grid, self.size, moves[idUser])
-            else:
-                self.snakes[idUser].move(self.grid, self.size)
+        for idUser, snake in self.snakes.items():
+            if snake.alive:
+                if idUser in moves:
+                    self.snakes[idUser].move(self.grid, self.size, moves[idUser])
+                else:
+                    self.snakes[idUser].move(self.grid, self.size)
 
         self.eatSnacks()
         self.checkCollisions()
 
     def eatSnacks(self):
         for snake in self.snakes.values():
-            if snake.body[0].pos in self.snacks:
-                snake.addCube()
-                del self.snacks[snake.body[0].pos]
+            if snake.alive:
+                if snake.body[0].pos in self.snacks:
+                    snake.addCube()
+                    del self.snacks[snake.body[0].pos]
 
     def checkCollisions(self):
         badBlocks = {}
         for snake in self.snakes.values():
-            for c in snake.body:
-                if c.pos in badBlocks:
-                    badBlocks[c.pos] += 1
-                else:
-                    badBlocks[c.pos] = 1
+            if snake.alive:
+                for c in snake.body:
+                    if c.pos in badBlocks:
+                        badBlocks[c.pos] += 1
+                    else:
+                        badBlocks[c.pos] = 1
 
         for snake in self.snakes.values():
-            if badBlocks[snake.body[0].pos] > 1:
-                snake.alive = False
-                snake.reset(self.getValidPos())
+            if snake.alive:
+                if badBlocks[snake.body[0].pos] > 1:
+                    snake.alive = False
+                    self.addSnack([c.pos for c in snake.body])
+                # snake.reset(self.getValidPos())
 
         del badBlocks
 

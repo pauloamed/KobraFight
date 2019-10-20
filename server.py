@@ -15,6 +15,26 @@ import sys
 
 import pickle
 
+def doGameLogic(id_user, move, board):
+    board.update({id_user: move})
+
+def manageInput(sock, read_list):
+    data = sock.recv(1048576)
+
+    if data:
+        move = data.decode('ascii')
+        id_user = d[sock.getpeername()]
+        return (id_user, move)
+    else:
+        sock.close()
+        read_list.remove(sock)
+        return None
+
+def manageOutput(board, socket):
+    boardEncoded = pickle.dumps(board)
+    sock.send(boardEncoded)
+
+
 # win = pygame.display.set_mode((500, 500)) # cria o tabuleiro (janela)
 clock = pygame.time.Clock() # clock
 
@@ -66,3 +86,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 else:
                     sock.close()
                     read_list.remove(sock)
+                # output = manageInput(socket, read_list)
+                #
+                # if output is None:
+                #     pass
+                # id_user, move = output
+                #
+                # doGameLogic(id_user, move, board)
+                # manageOutput(board, socket)

@@ -1,12 +1,14 @@
 import math
 import pygame
 import tkinter as tk
+from tkinter import simpledialog
 
 from Snake import Snake
 from Cube import Cube
 from globals import *
 from Snack import Snack
 from Board import Board
+from dialogs import LoginDialog
 
 import socket
 import select
@@ -21,6 +23,12 @@ allowedKeys = [
     (pygame.K_UP, "up"),
     (pygame.K_DOWN, "down")
 ]
+
+def selectIP():
+    root = tk.Tk()
+    root.withdraw()
+    d = LoginDialog(root, "Login")
+    return (d.r1, int(d.r2))
 
 def getNewDir():
     for event in pygame.event.get():
@@ -37,11 +45,12 @@ def getNewDir():
 
     return None
 
-HOST = 'localhost'  # The server's hostname or IP address
-PORT = 12346    # The port used by the server
+HOST, PORT = selectIP()
 
 win = pygame.display.set_mode((500, 500)) # cria o tabuleiro (janela)
 clock = pygame.time.Clock() # clock
+
+
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.connect((HOST, PORT))

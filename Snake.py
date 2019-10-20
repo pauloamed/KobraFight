@@ -61,6 +61,14 @@ class Snake(object):
         self.dirnx = 0
         self.dirny = 1
 
+    def die(self):
+        self.head = None
+        self.alive = False
+        self.body = []
+        self.turns = {}
+        self.dirnx = 0
+        self.dirny = 1
+
     # def initSnake(self, board):
 
     def addCube(self):
