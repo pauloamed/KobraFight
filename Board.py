@@ -23,6 +23,9 @@ class Board(object):
         initPos, initDir = self.getValidSnakeStart()
         self.snakes[idUser] = Snake(color, initPos, initDir)
 
+    def getSnake(self, idUser):
+        return self.snakes[idUser]
+
 
     def getValidPos(self, positions=None):
         if positions == None:
@@ -106,7 +109,7 @@ class Board(object):
                 if badBlocks[snake.body[0].pos] > 1:
                     self.addSnack([c.pos for c in snake.body])
                     snake.die()
-                    
+
         del badBlocks
 
 

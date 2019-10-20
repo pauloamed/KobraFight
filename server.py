@@ -17,16 +17,69 @@ import pickle
 
 import struct
 
-def doGameLogic(id_user, move, board):
-    board.update({id_user: move})
+def manageInput(read_list, s, d):
+    readable, writeable, error = select.select(read_list,[],[])
 
-def manageInput(sock, read_list):
+    new_players = []
+    lost_connections = []
+    moves = []
+    socks_lc = []
+    socks_ok = []
 
 
 
-def manageOutput(board, socket):
-    boardEncoded = pickle.dumps(board)
-    sock.send(boardEncoded)
+    for sock in readable:
+        if sock is s:
+            conn, info = sock.accept()
+            read_list.append(conn)
+            print("connection received from ", info)
+
+            d[info] = len(d)
+            new_players.append(d[info])
+
+        else:
+            data = sock.recv(1048576)
+
+            if data:
+                id_user = d[sock.getpeername()]
+                move = data.decode('ascii')
+                moves.append((id_user, move))
+                socks_ok.append(sock)
+            else:
+                print(sock)
+                print([readable, writeable, error])
+                # print(d[sock.getpeername()])
+                lost_connections.append(d[sock.getpeername()])
+                socks_lc.append(sock)
+
+    return new_players, lost_connections, moves, socks_lc, socks_ok
+
+
+def manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500ms):
+    for lost_con in lost_connections:
+        board.getSnake(lost_con).die()
+
+    for player in new_players:
+        board.addSnake(player)
+
+    for id_user, move in moves:
+        board.update({id_user: move})
+
+    if time.time() - checkpoint_500ms >= 0.5:
+        board.addSnack()
+        checkpoint_500ms = time.time()
+
+    return board, checkpoint_500ms
+
+def manageOutput(socks_lc, socks_ok, board, read_list):
+    boardEncoded = pickle.dumps(board, protocol=2)
+
+    for sock in socks_lc:
+        sock.close()
+        read_list.remove(sock)
+
+    for sock in socks_ok:
+        sock.send(boardEncoded)
 
 
 # win = pygame.display.set_mode((500, 500)) # cria o tabuleiro (janela)
@@ -50,56 +103,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     while True:
         # pygame.time.delay(50) # pausa em milisegundos
         clock.tick(10) # sincronizacao
-        readable, writeable, error = select.select(read_list,[],[])
-
-        new_players = []
-        lost_connections = []
-        moves = []
-
-        socks_lc = []
-        socks_ok = []
-
-        for sock in readable:
-            if sock is s:
-                conn, info = sock.accept()
-                read_list.append(conn)
-                print("connection received from ", info)
-
-                d[info] = len(d)
-                new_players.append(d[info])
-
-            else:
-                data = sock.recv(1048576)
-
-                if data:
-                    id_user = d[sock.getpeername()]
-                    move = data.decode('ascii')
-                    moves.append((id_user, move))
-                    socks_ok.append(sock)
-                else:
-                    lost_connections.append(id_user)
-                    socks_lc.append(sock)
-
-
-        for lost_con in lost_connections:
-            # board.getSnake(lost_con).die()
-            pass
-
-        for player in new_players:
-            board.addSnake(player)
-
-        for id_user, move in moves:
-            board.update({id_user: move})
-
-        if time.time() - checkpoint_500ms >= 0.5:
-            board.addSnack()
-            checkpoint_500ms = time.time()
-
-        boardEncoded = pickle.dumps(board, protocol=2)
-
-        for sock in socks_lc:
-            sock.close()
-            read_list.remove(sock)
-
-        for sock in socks_ok:
-            sock.send(boardEncoded)
+        new_players, lost_connections, moves, socks_lc, socks_ok = manageInput(read_list, s, d)
+        # print(len(socks_ok), len(read_list))
+        board, checkpoint_500ms = manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500ms)
+        manageOutput(socks_lc, socks_ok, board, read_list)

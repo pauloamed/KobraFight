@@ -23,8 +23,6 @@ class Snake(object):
             new_dirnx, new_dirny = (1, 0)
 
         if (new_dirnx, new_dirny) != (0, 0): # pressionei, mas trtando excecoes
-            print(self.dirnx, self.dirny)
-            print(new_dirnx, new_dirny)
             if self.dirnx == 0 and new_dirnx != 0:
                 self.dirnx, self.dirny = (new_dirnx, new_dirny)
                 self.turns[self.head.pos] = [new_dirnx, new_dirny]
