@@ -107,8 +107,6 @@ def thread_func(port):
 
 def main():
     port = 12347
-
-
     t = threading.Thread(target=thread_func, args=(port,))
     t.start()
 

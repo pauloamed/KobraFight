@@ -81,27 +81,29 @@ def manageOutput(socks_lc, socks_ok, board, read_list):
         sock.send(boardEncoded)
 
 
-# win = pygame.display.set_mode((500, 500)) # cria o tabuleiro (janela)
-clock = pygame.time.Clock() # clock
+def main():
+    clock = pygame.time.Clock() # clock
 
-d = dict()
+    d = dict()
 
-board = Board()
-port = 12347
+    board = Board()
+    port = 12347
 
-checkpoint_500ms = time.time()
+    checkpoint_500ms = time.time()
 
-read_list = []
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.setblocking(0)
-    s.bind(('', port))
-    s.listen(5)
-    read_list.append(s)
+    read_list = []
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setblocking(0)
+        s.bind(('', port))
+        s.listen(5)
+        read_list.append(s)
 
 
-    while True:
-        # pygame.time.delay(50) # pausa em milisegundos
-        clock.tick(10) # sincronizacao
-        new_players, lost_connections, moves, socks_lc, socks_ok = manageInput(read_list, s, d)
-        board, checkpoint_500ms = manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500ms)
-        manageOutput(socks_lc, socks_ok, board, read_list)
+        while True:
+            # pygame.time.delay(50) # pausa em milisegundos
+            clock.tick(10) # sincronizacao
+            new_players, lost_connections, moves, socks_lc, socks_ok = manageInput(read_list, s, d)
+            board, checkpoint_500ms = manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500ms)
+            manageOutput(socks_lc, socks_ok, board, read_list)
+
+main()
