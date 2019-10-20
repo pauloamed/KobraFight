@@ -14,6 +14,12 @@ import pickle
 
 import threading
 
+def calcula_duracao(funcao): # decorator para calcular o tempo
+    def wrapper(*args):
+        tempo_inicial = time.time() # marca tempo inicial
+        funcao(*args) # chama a funcao
+        return time.time() - tempo_inicial # marca o tempo decorrido
+    return wrapper
 
 def manageInput(read_list, s, d):
     readable, writeable, error = select.select(read_list,[],[])
