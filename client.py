@@ -14,9 +14,9 @@ import socket
 import select
 import time
 import sys
+import signal
 
 import pickle
-import struct
 
 allowedKeys = [
     (pygame.K_LEFT, "left"),
@@ -24,6 +24,12 @@ allowedKeys = [
     (pygame.K_UP, "up"),
     (pygame.K_DOWN, "down")
 ]
+
+def INT_handler(sig_num, arg):
+    print(arg)
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, INT_handler)
 
 def selectIP():
     root = tk.Tk()
@@ -35,6 +41,7 @@ def getNewDir():
     for event in pygame.event.get():
         # event: qualquer evento que acontece (mouse, qlqr tecla, etc)
         if event.type == pygame.QUIT: # se o evento for pra quitar, quita
+            print("oiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
             pygame.quit()
 
     keys = pygame.key.get_pressed() # recuperando mapa de teclas
@@ -65,20 +72,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.sendall("no".encode('ascii'))
 
         data = s.recv(1048576)
-        # data = s.recv( struct.calcsize("!I") )
-        # print(data)
-        # print(int.from_bytes(data, "big"))
-        # print(struct.calcsize("!I"))
-        # body_size = struct.unpack("!I", data)[0]
-        # body = s.recv( body_size )
-        # board = pickle.loads(body)
+
 
         try:
             board = pickle.loads(data)
         except:
             print("Failed to load")
-            # print(board.snakes)
-            # print(board.snacks)
         board.draw(win)
 
 
