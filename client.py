@@ -16,6 +16,7 @@ import time
 import sys
 
 import pickle
+import struct
 
 allowedKeys = [
     (pygame.K_LEFT, "left"),
@@ -62,9 +63,18 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.sendall(newDir.encode('ascii'))
         else:
             s.sendall("no".encode('ascii'))
-        data = s.recv(1048576)
+
+            # data = s.recv(1048576)
+        data = s.recv( struct.calcsize("!I") )
+        body_size = struct.unpack("!I", data)[0]
+        body = s.recv( body_size )
+
+        # data = struct.unpack('!I', buf)[0]
+        # print(struct.unpack('!I', buf))
+        # print(type(struct.unpack('!I', buf)))
+        # print(buf)
         # print(data)
-        board = pickle.loads(data)
+        board = pickle.loads(body)
         # print(board.snakes)
         # print(board.snacks)
         board.draw(win)

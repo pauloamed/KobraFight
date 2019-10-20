@@ -15,6 +15,8 @@ import sys
 
 import pickle
 
+import struct
+
 def doGameLogic(id_user, move, board):
     board.update({id_user: move})
 
@@ -103,9 +105,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
         boardEncoded = pickle.dumps(board)
 
+        data = struct.pack('!I', len(boardEncoded))
+        data += boardEncoded
+        # data = pack(, boardEncoded)
+        # packet = length + packet
+
         for sock in socks_lc:
             sock.close()
             read_list.remove(sock)
 
         for sock in socks_ok:
-            sock.send(boardEncoded)
+            sock.send(data)
