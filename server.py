@@ -105,8 +105,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
         boardEncoded = pickle.dumps(board)
 
-        data = struct.pack('!I', len(boardEncoded))
-        data += boardEncoded
+        # data = struct.pack('!I', len(boardEncoded))
+        # data += boardEncoded
         # data = pack(, boardEncoded)
         # packet = length + packet
 
@@ -115,4 +115,4 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             read_list.remove(sock)
 
         for sock in socks_ok:
-            sock.send(data)
+            sock.send(boardEncoded)
