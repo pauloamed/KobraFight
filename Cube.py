@@ -2,16 +2,17 @@ import pygame
 from globals import *
 
 class Cube(object):
-    def __init__(self,start,color,dirnx=1,dirny=0):
+    def __init__(self,start,color,dirnx,dirny):
         self.pos = start # tupla com coord x e coord y (x, y)
-        self.dirnx = 1
-        self.dirny = 0
+        self.dirnx = dirnx
+        self.dirny = dirny
         self.color = color # cor em rgb do bloco
 
 
-    def move(self, dirnx, dirny):
-        self.dirnx = dirnx
-        self.dirny = dirny
+    def move(self, dir=None):
+        if dir != None:
+            self.dirnx, self.dirny = dir
+
         self.pos = (self.pos[0] + self.dirnx, self.pos[1] + self.dirny)
 
     def draw(self, surface, eyes=False):

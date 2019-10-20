@@ -78,9 +78,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
             else:
                 data = sock.recv(1048576)
-                id_user = d[sock.getpeername()]
 
                 if data:
+                    id_user = d[sock.getpeername()]
                     move = data.decode('ascii')
                     moves.append((id_user, move))
                     socks_ok.append(sock)
@@ -103,7 +103,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             board.addSnack()
             checkpoint_500ms = time.time()
 
-        boardEncoded = pickle.dumps(board)
+        boardEncoded = pickle.dumps(board, protocol=2)
 
         # data = struct.pack('!I', len(boardEncoded))
         # data += boardEncoded

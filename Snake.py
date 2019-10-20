@@ -2,14 +2,11 @@ from Cube import Cube
 import pygame
 
 class Snake(object):
-    def __init__(self, color, pos):
-        # pos: posicao inicial
-        self.body = []
+    def __init__(self, color, pos, dir):
         self.color = color # cor da cobrinha
-        self.head = Cube(pos, color) # cubo indicando a cabeca
-        self.body.append(self.head) # body (lista com blocos) sempre tem a head
-        self.dirnx = 0 # comeco nao me movendo na vertical
-        self.dirny = 1 # comeco me movendo pra direita
+        self.body = [Cube(p, self.color, dir[0], dir[1]) for p in pos]
+        self.head = self.body[0]  # cubo indicando a cabeca
+        self.dirnx, self.dirny = dir
         self.alive = True
         self.turns = {} # dicionario guardando onde o mudou de direcao e pra onde
 
@@ -25,11 +22,19 @@ class Snake(object):
         elif dir == "right":
             new_dirnx, new_dirny = (1, 0)
 
-        if (new_dirnx, new_dirny) != (0, 0): # se nao pressionei nenhuma tecla, movo como moveria
-            if not (len(self.body) > 2 and (self.dirnx == 0 and new_dirny == -(self.dirny) or new_dirnx == -(self.dirnx))):
+        if (new_dirnx, new_dirny) != (0, 0): # pressionei, mas trtando excecoes
+            print(self.dirnx, self.dirny)
+            print(new_dirnx, new_dirny)
+            if self.dirnx == 0 and new_dirnx != 0:
+                self.dirnx, self.dirny = (new_dirnx, new_dirny)
+                self.turns[self.head.pos] = [new_dirnx, new_dirny]
+            elif self.dirny == 0 and new_dirny != 0:
                 self.dirnx, self.dirny = (new_dirnx, new_dirny)
                 self.turns[self.head.pos] = [new_dirnx, new_dirny]
 
+        self.moveBody(grid, size)
+
+    def moveBody(self, grid, size):
         for i, c in enumerate(self.body):
             p = c.pos # recupera posicao do cubo
             dirx, diry = None, None
@@ -38,12 +43,10 @@ class Snake(object):
                 turn = self.turns[p] # recupera a 'nova' direcao
                 if i == len(self.body) - 1: # se to no rabo
                     self.turns.pop(p) # apago a mudada de direcao
-                dirx, diry = turn
+                c.move(turn)
             else:
-                dirx = c.dirnx
-                diry = c.dirny
+                c.move()
 
-            c.move(dirx, diry)
 
             if c.pos[0] < 0:
                 c.pos = (grid-1, c.pos[1])
@@ -53,6 +56,8 @@ class Snake(object):
                 c.pos = (0 , c.pos[1])
             if c.pos[1] >= grid:
                 c.pos = (c.pos[0], 0)
+
+
 
     def reset(self, pos):
         self.head = Cube(pos, self.color)
@@ -74,9 +79,8 @@ class Snake(object):
     def addCube(self):
         tail = self.body[-1] # reucpernado o ultimo cubo
         dx, dy = tail.dirnx, tail.dirny # direcoes do ulimo cubo
-        self.body.append(Cube((tail.pos[0]-dx, tail.pos[1]-dy), self.color))
-        self.body[-1].dirnx = dx
-        self.body[-1].dirny = dy
+        newPos = (tail.pos[0]-dx, tail.pos[1]-dy)
+        self.body.append(Cube(newPos, self.color, dx, dy))
 
 
     def draw(self, surface):

@@ -73,10 +73,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         # body = s.recv( body_size )
         # board = pickle.loads(body)
 
-        board = pickle.loads(data)
-        # print(board.snakes)
-        # print(board.snacks)
+        try:
+            board = pickle.loads(data)
+        except:
+            print("Failed to load")
+            # print(board.snakes)
+            # print(board.snacks)
         board.draw(win)
+
 
 
 # print('Received', repr(data))
