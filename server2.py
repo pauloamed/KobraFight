@@ -75,7 +75,6 @@ def thread_func(read_list, s, d):
         fila.append((new_players, lost_connections, moves, socks_ok, d))
 
         if len(read_list) == 1:
-            print("AEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
             flag = False
             break
 
@@ -126,7 +125,7 @@ def main():
         while flag:
             # pygame.time.delay(50) # pausa em milisegundos
             clock.tick(10) # sincronizacao
-            if len(fila) != 0:
+            while len(fila) != 0:
                 new_players, lost_connections, moves, socks_ok, d = fila[0]
                 fila.pop(0)
 
