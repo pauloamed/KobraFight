@@ -21,16 +21,8 @@ def doGameLogic(id_user, move, board):
     board.update({id_user: move})
 
 def manageInput(sock, read_list):
-    data = sock.recv(1048576)
 
-    if data:
-        move = data.decode('ascii')
-        id_user = d[sock.getpeername()]
-        return (id_user, move)
-    else:
-        sock.close()
-        read_list.remove(sock)
-        return None
+
 
 def manageOutput(board, socket):
     boardEncoded = pickle.dumps(board)
@@ -104,11 +96,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             checkpoint_500ms = time.time()
 
         boardEncoded = pickle.dumps(board, protocol=2)
-
-        # data = struct.pack('!I', len(boardEncoded))
-        # data += boardEncoded
-        # data = pack(, boardEncoded)
-        # packet = length + packet
 
         for sock in socks_lc:
             sock.close()
