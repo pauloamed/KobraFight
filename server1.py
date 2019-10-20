@@ -14,12 +14,12 @@ import pickle
 
 import threading
 
-def calcula_duracao(funcao): # decorator para calcular o tempo
-    def wrapper(*args):
-        tempo_inicial = time.time() # marca tempo inicial
-        funcao(*args) # chama a funcao
-        return time.time() - tempo_inicial # marca o tempo decorrido
-    return wrapper
+# def calcula_duracao(funcao): # decorator para calcular o tempo
+#     def wrapper(*args):
+#         tempo_inicial = time.time() # marca tempo inicial
+#         funcao(*args) # chama a funcao
+#         return time.time() - tempo_inicial # marca o tempo decorrido
+#     return wrapper
 
 def manageInput(read_list, s, d):
     readable, writeable, error = select.select(read_list,[],[])
@@ -91,12 +91,13 @@ def manageOutput(socks_lc, socks_ok, board, read_list):
         sock.send(boardEncoded)
 
 
-def thread_func(port):
+def thread_func(port, dur):
     read_list = []
     clock = pygame.time.Clock() # clock
     checkpoint_500ms = time.time()
     d = dict()
     board = Board()
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setblocking(0)
         s.bind(('', port))
@@ -105,16 +106,38 @@ def thread_func(port):
         while True:
             # pygame.time.delay(50) # pausa em milisegundos
             clock.tick(10) # sincronizacao
-            print(read_list)
+
+            t = time.time()
             new_players, lost_connections, moves, socks_lc, socks_ok = manageInput(read_list, s, d)
+            dur['io_time'] += time.time() - t
+
+            t = time.time()
             board, checkpoint_500ms = manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500ms)
+            dur['game_logic_time'] += time.time() - t
+
+            t = time.time()
             manageOutput(socks_lc, socks_ok, board, read_list)
+            dur['io_time'] += time.time() - t
+
+            if(len(read_list) == 1):
+                break
+
+
 
 
 def main():
     port = 12347
-    t = threading.Thread(target=thread_func, args=(port,))
+
+    dur = {
+        'io_time': 0,
+        'game_logic_time': 0
+    }
+
+    t = threading.Thread(target=thread_func, args=(port, dur))
     t.start()
+    t.join()
+
+    print(dur)
 
 
 main()
