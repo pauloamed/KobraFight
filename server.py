@@ -41,7 +41,7 @@ clock = pygame.time.Clock() # clock
 d = dict()
 
 board = Board(SIZE, GRID)
-port = 12346
+port = 12347
 
 checkpoint_500ms = time.time()
 
@@ -58,10 +58,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         clock.tick(10) # sincronizacao
         readable, writeable, error = select.select(read_list,[],[])
 
-        # if time.time() -
-        if time.time() - checkpoint_500ms >= 0.5:
-            board.addSnack()
-            checkpoint_500ms = time.time()
+        new_players = []
+        lost_connections = []
+        moves = []
+
+        socks_lc = []
+        socks_ok = []
 
         for sock in readable:
             if sock is s:
@@ -70,27 +72,40 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 print("connection received from ", info)
 
                 d[info] = len(d)
-
-                board.addSnake(d[info])
+                new_players.append(d[info])
 
             else:
-                id_user = d[sock.getpeername()]
                 data = sock.recv(1048576)
-                # print(data)
-                # print(board.snakes)
-                if data: # se recebi algo valido, imprimo oq recebi e envio de volta
-                    board.update({id_user: data.decode('ascii')})
-                    # board.draw(win)
-                    boardEncoded = pickle.dumps(board)
-                    sock.send(boardEncoded)
+                id_user = d[sock.getpeername()]
+
+                if data:
+                    move = data.decode('ascii')
+                    moves.append((id_user, move))
+                    socks_ok.append(sock)
                 else:
-                    sock.close()
-                    read_list.remove(sock)
-                # output = manageInput(socket, read_list)
-                #
-                # if output is None:
-                #     pass
-                # id_user, move = output
-                #
-                # doGameLogic(id_user, move, board)
-                # manageOutput(board, socket)
+                    lost_connections.append(id_user)
+                    socks_lc.append(sock)
+
+
+        for lost_con in lost_connections:
+            # board.getSnake(lost_con).die()
+            pass
+
+        for player in new_players:
+            board.addSnake(player)
+
+        for id_user, move in moves:
+            board.update({id_user: move})
+
+        if time.time() - checkpoint_500ms >= 0.5:
+            board.addSnack()
+            checkpoint_500ms = time.time()
+
+        boardEncoded = pickle.dumps(board)
+
+        for sock in socks_lc:
+            sock.close()
+            read_list.remove(sock)
+
+        for sock in socks_ok:
+            sock.send(boardEncoded)
