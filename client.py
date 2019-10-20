@@ -72,7 +72,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             newDir = getNewDir()
         except:
             break
-            
+
         if newDir:
             s.sendall(newDir.encode('ascii'))
         else:
@@ -83,9 +83,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
         try:
             board = pickle.loads(data)
+            board.draw(win)
         except:
             print("Failed to load")
-        board.draw(win)
 
     s.sendall("out".encode('ascii'))
 

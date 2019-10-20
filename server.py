@@ -53,7 +53,7 @@ def manageInput(read_list, s, d):
                     socks_ok.append(sock)
 
             else:
-                print('ERROR')
+                socks_lc.append(sock)
 
     return new_players, lost_connections, moves, socks_lc, socks_ok
 
