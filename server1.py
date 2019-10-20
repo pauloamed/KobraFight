@@ -122,9 +122,6 @@ def thread_func(port, dur):
             if(len(read_list) == 1):
                 break
 
-
-
-
 def main():
     port = 12347
 
