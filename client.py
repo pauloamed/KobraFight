@@ -13,20 +13,11 @@ import signal
 
 import pickle
 
-allowedKeys = [
-    (pygame.K_LEFT, "left"),
-    (pygame.K_RIGHT, "right"),
-    (pygame.K_UP, "up"),
-    (pygame.K_DOWN, "down")
-]
-
 flag = True
 
 def INT_handler(sig_num, arg):
     flag = False
     pygame.quit()
-
-signal.signal(signal.SIGINT, INT_handler)
 
 def selectIP():
     root = tk.Tk()
@@ -34,7 +25,7 @@ def selectIP():
     d = LoginDialog(root, "Login")
     return (d.r1, int(d.r2))
 
-def getNewDir():
+def getNewDir(allowedKeys):
     for event in pygame.event.get():
         # event: qualquer evento que acontece (mouse, qlqr tecla, etc)
         if event.type == pygame.QUIT: # se o evento for pra quitar, quita
@@ -50,42 +41,53 @@ def getNewDir():
 
     return None
 
-HOST, PORT = selectIP()
 
-win = pygame.display.set_mode((500, 500)) # cria o tabuleiro (janela)
-clock = pygame.time.Clock() # clock
+def main():
+    signal.signal(signal.SIGINT, INT_handler)
+
+    allowedKeys = [
+        (pygame.K_LEFT, "left"),
+        (pygame.K_RIGHT, "right"),
+        (pygame.K_UP, "up"),
+        (pygame.K_DOWN, "down")
+    ]
+    HOST, PORT = selectIP()
+
+    SIZE, GRID = 500, 20
+
+    pygame.init()
+
+    win = pygame.display.set_mode((SIZE + 150, SIZE)) # cria o tabuleiro (janela)
+    clock = pygame.time.Clock() # clock
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((HOST, PORT))
+
+        ip, port = s.getsockname()
+        conn = (ip + ':' + str(port))
+
+        while flag:
+            pygame.time.delay(50) # pausa em milisegundos
+            clock.tick(10) # sincronizacao
+
+            try:
+                newDir = getNewDir(allowedKeys)
+            except:
+                break
+
+            if newDir:
+                s.sendall((conn + "_" + newDir + ";").encode('ascii'))
+            else:
+                s.sendall((conn + "_NO" + ";").encode('ascii'))
+
+            data = s.recv(1048576)
 
 
+            # try:
+            id, board = pickle.loads(data)
+            # except:
+            #     print("Failed to load")
+            board.draw(win, id)
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.connect((HOST, PORT))
+        s.sendall((conn + "_OUT" + ";").encode('ascii'))
 
-    ip, port = s.getsockname()
-    conn = (ip + ':' + str(port))
-
-    while flag:
-        pygame.time.delay(50) # pausa em milisegundos
-        clock.tick(10) # sincronizacao
-
-        try:
-            newDir = getNewDir()
-        except:
-            break
-
-        if newDir:
-            s.sendall((conn + "_" + newDir + ";").encode('ascii'))
-        else:
-            s.sendall((conn + "_NO" + ";").encode('ascii'))
-
-        data = s.recv(1048576)
-
-
-        try:
-            board = pickle.loads(data)
-            board.draw(win)
-        except:
-            print("Failed to load")
-
-    s.sendall((conn + "_OUT" + ";").encode('ascii'))
-
-# print('Received', repr(data))
+main()

@@ -8,6 +8,7 @@ class Snake(object):
         self.head = self.body[0]  # cubo indicando a cabeca
         self.dirnx, self.dirny = dir
         self.alive = True
+        self.score = 0
         self.turns = {} # dicionario guardando onde o mudou de direcao e pra onde
 
     def move(self, grid, size, dir=None):
@@ -75,6 +76,7 @@ class Snake(object):
     # def initSnake(self, board):
 
     def addCube(self):
+        self.score += 1
         tail = self.body[-1] # reucpernado o ultimo cubo
         dx, dy = tail.dirnx, tail.dirny # direcoes do ulimo cubo
         newPos = (tail.pos[0]-dx, tail.pos[1]-dy)

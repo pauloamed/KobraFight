@@ -46,7 +46,7 @@ def manageInput(read_list, s, d):
                 else:
                     move = body
                     moves.append((id_user, move))
-                    socks_ok.append(sock)
+                    socks_ok.append((id_user, sock))
 
             else:
                 socks_lc.append(sock)
@@ -71,19 +71,20 @@ def manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500m
     return board, checkpoint_500ms
 
 def manageOutput(socks_lc, socks_ok, board, read_list):
-    boardEncoded = pickle.dumps(board, protocol=2)
 
     for sock in socks_lc:
         sock.close()
         read_list.remove(sock)
 
-    for sock in socks_ok:
-        sock.send(boardEncoded)
+    for id_user, sock in socks_ok:
+        encoded = pickle.dumps((id_user, board), protocol=2)
+        sock.send(encoded)
 
 
 def main():
-    clock = pygame.time.Clock() # clock
+    pygame.init()
 
+    clock = pygame.time.Clock() # clock
     d = dict()
 
     board = Board()

@@ -17,7 +17,7 @@ class Board(object):
         color = None
         while True:
             color = [random.randint(0, 255) for _ in range(3)]
-            if ((color[0] ** 2 + color[1] ** 2 + color[2] ** 2) ** (1/2)) > 100:
+            if ((color[0] ** 2 + color[1] ** 2 + color[2] ** 2) ** (1/2)) > 150:
                 break
         initPos, initDir = self.getValidSnakeStart()
         self.snakes[idUser] = Snake(color, initPos, initDir)
@@ -139,14 +139,72 @@ class Board(object):
             pygame.draw.line(surface, WHITE_COLOR, (x, 0),(x, self.size))
             pygame.draw.line(surface, WHITE_COLOR, (0, y),(self.size, y))
 
-    def draw(self, surface):
+    def getScores(self):
+        scores = []
+        for idUser, snake in self.snakes.items():
+            if snake.alive:
+                scores.append((snake.score, idUser))
+
+        scores.sort(reverse=True)
+
+        return scores
+
+    def drawText(self, surface, id):
+        bigFont = pygame.font.SysFont('comicsansms', 32)
+        normalFont = pygame.font.SysFont('comicsansms', 22)
+        smallFont = pygame.font.SysFont('comicsansms', 18)
+
+        idText = normalFont.render('Your ID is: {}'.format(id), True, (255,255,255), (0,0,0))
+        titleText = bigFont.render('ScoreBoard', True, (255,255,255), (0,0,0))
+
+        titleTextRect = titleText.get_rect()
+        idTextRect = idText.get_rect()
+
+        titleTextRect.topleft = (self.size + 15, 15)
+        idTextRect.topleft = (self.size + 15, titleTextRect.height + 15)
+
+        surface.blit(titleText, titleTextRect)
+        surface.blit(idText, idTextRect)
+
+        scores = self.getScores()
+
+        lastHeight = titleTextRect.height + idTextRect.height + 15
+        for score in scores:
+            scoreText = smallFont.render("{}: {}".format(score[1], score[0]), True, (255,255,255), (0,0,0))
+            scoreTextRect = scoreText.get_rect()
+            scoreTextRect.topleft = (self.size + 15, lastHeight + 10)
+            lastHeight = scoreTextRect.height + lastHeight
+            surface.blit(scoreText, scoreTextRect)
+
+    def drawGameOver(self, surface, id):
+        bigbigFont = pygame.font.SysFont('comicsansms', 52)
+
+        goText = bigbigFont.render('GAME OVER', True, (255,255,255), (0,0,0))
+        scoreText = bigbigFont.render('YOUR SCORE: {}'.format(self.snakes[id].score), True, (255,255,255), (0,0,0))
+
+        goTextRect = goText.get_rect()
+        scoreTextRect = scoreText.get_rect()
+
+        goTextRect.center = (self.size//2, self.size//2)
+        scoreTextRect.center = (self.size//2, self.size//2 + goTextRect.height)
+
+        surface.blit(goText, goTextRect)
+        surface.blit(scoreText, scoreTextRect)
+
+
+
+    def draw(self, surface, id):
         surface.fill((0,0,0))
+        self.drawGrid(surface)
+        self.drawText(surface, id)
 
         for snake in self.snakes.values():
             snake.draw(surface, self.size, self.grid)
 
-        for snack in self.snacks.values():
-            snack.draw(surface, self.size, self.grid)
+            for snack in self.snacks.values():
+                snack.draw(surface, self.size, self.grid)
+                
+        if not self.snakes[id].alive:
+            self.drawGameOver(surface, id)
 
-        self.drawGrid(surface)
         pygame.display.update()
