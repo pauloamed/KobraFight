@@ -14,7 +14,11 @@ class Board(object):
         self.snacks = {}
 
     def addSnake(self, idUser):
-        color = [random.randint(0, 256) for _ in range(3)]
+        color = None
+        while True:
+            color = [random.randint(0, 255) for _ in range(3)]
+            if ((color[0] ** 2 + color[1] ** 2 + color[2] ** 2) ** (1/2)) > 100:
+                break
         initPos, initDir = self.getValidSnakeStart()
         self.snakes[idUser] = Snake(color, initPos, initDir)
 
