@@ -36,4 +36,7 @@ def main():
             board, checkpoint_500ms = manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500ms)
             manageOutput(socks_ok, board)
 
+            if len(read_list) == 1:
+                break
+
 main()
