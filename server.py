@@ -5,81 +5,10 @@ import tkinter as tk
 from kobra_fight.Board import Board
 
 import socket
-import select
 import time
 import sys
 
-import pickle
-
-def manageInput(read_list, s, d):
-    readable, writeable, error = select.select(read_list,[],[])
-
-    new_players = []
-    lost_connections = []
-    moves = []
-    socks_lc = []
-    socks_ok = []
-
-
-
-    for sock in readable:
-        if sock is s:
-            conn, info = sock.accept()
-            read_list.append(conn)
-            print("connection received from ", info)
-            ip, port = info
-            cons = (ip + ':' + str(port))
-            d[cons] = len(d)
-            new_players.append(d[cons])
-
-        else:
-            data = sock.recv(1048576)
-
-            if data:
-                data = data.decode('ascii').split(';')[0]
-                head, body = data.split('_')
-                id_user = d[head]
-
-                if body == 'OUT':
-                    lost_connections.append(id_user)
-                    socks_lc.append(sock)
-                else:
-                    move = body
-                    moves.append((id_user, move))
-                    socks_ok.append((id_user, sock))
-
-            else:
-                socks_lc.append(sock)
-
-    return new_players, lost_connections, moves, socks_lc, socks_ok
-
-
-def manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500ms):
-    for lost_con in lost_connections:
-        board.killSnake(lost_con)
-
-    for player in new_players:
-        board.addSnake(player)
-
-    for id_user, move in moves:
-        board.update({id_user: move})
-
-    if time.time() - checkpoint_500ms >= 0.5:
-        board.addSnack()
-        checkpoint_500ms = time.time()
-
-    return board, checkpoint_500ms
-
-def manageOutput(socks_lc, socks_ok, board, read_list):
-
-    for sock in socks_lc:
-        sock.close()
-        read_list.remove(sock)
-
-    for id_user, sock in socks_ok:
-        encoded = pickle.dumps((id_user, board), protocol=2)
-        sock.send(encoded)
-
+from server_utils import manageInput, manageGameLogic, manageOutput
 
 def main():
     pygame.init()
@@ -88,7 +17,7 @@ def main():
     d = dict()
 
     board = Board()
-    port = 12347
+    port = 12345
 
     checkpoint_500ms = time.time()
 
@@ -103,8 +32,8 @@ def main():
         while True:
             # pygame.time.delay(50) # pausa em milisegundos
             clock.tick(10) # sincronizacao
-            new_players, lost_connections, moves, socks_lc, socks_ok = manageInput(read_list, s, d)
+            new_players, lost_connections, moves, socks_ok, d = manageInput(read_list, s, d)
             board, checkpoint_500ms = manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500ms)
-            manageOutput(socks_lc, socks_ok, board, read_list)
+            manageOutput(socks_ok, board)
 
 main()
