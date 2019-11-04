@@ -1,0 +1,29 @@
+TRABALHO - UNIDADE 3
+
+Alunos: Gabriel Queiroz, Paulo Medeiros
+
+==========================================================================================================
+
+CRONOGRAMA BASE
+
+06.11: Checkpoint 1
+11.11: Dev
+13.11: Dev
+18.11: Checkpoint 2 + Dev
+20.11: Checkpoint 2 + Dev
+25.11: Apresentação
+
+==========================================================================================================
+
+TEMA
+
+Balanceador de cargas para o jogo implementado no trabalho da segunda unidade
+
+==========================================================================================================
+
+CRONOGRAMA DEFINIDO
+
+11-13.11: Identificação e Resolução de bugs da versão base
+13-18: Pesquisa e implementação do balanceador de carga
+18-20.11: Tirar dúvidas sobre possíveis bugs, melhorias, etc.
+20-24.11: Finalização da implementação
