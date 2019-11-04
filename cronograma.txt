@@ -27,3 +27,18 @@ CRONOGRAMA DEFINIDO
 13-18: Pesquisa e implementação do balanceador de carga
 18-20.11: Tirar dúvidas sobre possíveis bugs, melhorias, etc.
 20-24.11: Finalização da implementação
+
+==========================================================================================================
+
+TAREFAS ABERTAS
+
+    - Revisão e refatoração de código; Remoção de inconsistências;
+    - Optar por utilizar somente um tipo de server (ao invés de 3 versões)
+    - Melhorias da implementação original:
+        - Evitar que o jogo aumente a velocidade quando múltiplos clientes se conectam
+        - Quando a cobra morre, permitir que o cliente reinicie o jogo sem precisar ser reconectar
+        - Identificação e correção de lags durante o jogo
+        - Utilizar biblioteca struct para comunicação entre server e cliente
+    - Pesquisar sobre balanceador de carga
+    - Implementar versão básica do balanceador
+    - Implementar balanceador com dois diferentes algortimos
