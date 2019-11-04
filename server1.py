@@ -31,7 +31,7 @@ def thread_func(port, dur):
 
             t = time.time()
             new_players, lost_connections, moves, socks_ok, d = manageInput(read_list, s, d)
-            dur['io_time'] += time.time() - t
+            dur['i_time'] += time.time() - t
 
             t = time.time()
             board, checkpoint_500ms = manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500ms)
@@ -39,7 +39,7 @@ def thread_func(port, dur):
 
             t = time.time()
             manageOutput(socks_ok, board)
-            dur['io_time'] += time.time() - t
+            dur['o_time'] += time.time() - t
 
             if(len(read_list) == 1):
                 break
@@ -48,7 +48,8 @@ def main():
     port = 12347
 
     dur = {
-        'io_time': 0,
+        'i_time': 0,
+        'o_time': 0,
         'game_logic_time': 0
     }
 
