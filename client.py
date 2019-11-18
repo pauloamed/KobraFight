@@ -82,12 +82,12 @@ def main():
             data = s.recv(1048576)
 
 
-            # try:
-            print(sys.getsizeof(data))
-            id, board = pickle.loads(data)
-            board.draw(win, id)
-            # except:
-            #     print("Failed to load")
+            try:
+            # print(sys.getsizeof(data))
+                id, board = pickle.loads(data)
+                board.draw(win, id)
+            except:
+                print("Failed to load")
 
         s.sendall((conn + "_OUT" + ";").encode('ascii'))
 
