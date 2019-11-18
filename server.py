@@ -17,7 +17,14 @@ def main():
     d = dict()
 
     board = Board()
-    port = 12345
+    #port = 12345
+
+    # --------------- Número da porta passado pelo popen ---------------
+    param = sys.argv[1:]
+    print(param)
+
+    port = int(param[0])
+    # --------------- --------------- --------------- ---------------
 
     checkpoint_500ms = time.time()
 

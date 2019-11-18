@@ -1,5 +1,8 @@
 from threading import thread
 
+import subprocess
+import atexit 
+
 class Balancer():
     def __init__():
         self.quantos_clientes_enviados_pro_server = dict()
@@ -15,6 +18,15 @@ class Balancer():
 
     def initServer(self):
         # como criar? processo?
+        portNumber = 1234
+        serverProcess = subprocess.Popen([sys.executable, "server.py", str(portNumber)])
+        time.sleep(2)
+
+        main()
+
+        # Matar o servidor quando o cliente fechar (acho que não está funcionando)
+        atexit.register(killServer)
+        
         # usar multiprocessing
 
         # retorna (id ou ip+port)
