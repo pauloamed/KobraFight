@@ -1,9 +1,12 @@
-from threading import thread
+from threading import Thread
 import subprocess
 import atexit
+import socket
 
 class Balancer():
-    def __init__():
+    def __init__(self, port):
+
+        self.port = port
 
         # key: ip+port, value: id
         self.serversId = dict()
@@ -23,6 +26,8 @@ class Balancer():
         self.maxPerServer = 1
         self.serverCount = 0
 
+        self.createdThreads = []
+
 
     def genServerPort(self):
         return 0
@@ -38,6 +43,11 @@ class Balancer():
         self.pendingClients[serverCount] = set()
         self.connectedClients[serverCount] = set()
         self.startServerThread(portNumber) # inicar thread q observa o server
+
+        thread = Thread(target = self.startServerThread, args = (portNumber, ))
+        thread.start()
+
+        self.createdThreads.append(thread)
 
         return serverCount
 
@@ -70,7 +80,7 @@ class Balancer():
         assignedServer = self.serverFromClient[client]
 
         if client not in self.pendingClients[assignedServer]:
-            throw 'Cliente nao conectado ao server passado'
+            raise Exception('Cliente nao conectado ao server passado')
 
         # remove client from self.pendingClients[assignedServer]
 
@@ -106,7 +116,7 @@ class Balancer():
                     elif self.clientConns2State[client] == 'ASGND':
                         self.assignedClientCase(client)
                     else:
-                        throw 'Erro'
+                        raise Exception('Erro')
                         exit()
                 else:
                     sock.close()
@@ -117,12 +127,15 @@ class Balancer():
         # tem q um socket para cada servidor
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.setblocking(0)
-            s.bind(('', port))
+            s.bind(('', self.port))
             s.listen(5)
-            read_list.append(s)
+            readList.append(s)
 
             while True:
                 self.processClientsConns(s)
+
+        for thread in createdThreads:
+            thread.join()
 
 
     def findServer(self):
@@ -136,7 +149,7 @@ class Balancer():
             foundServer = self.initServer()
         return foundServer
 
-    def startServerThread(self, serverPort):
+    def watchServerThread(self, serverPort):
         host = 'localhost'
         serverId = self.serverId[serverPort]
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

@@ -3,7 +3,7 @@ import time
 import pickle
 
 class Server():
-    def __init__(serverPort):
+    def __init__(self, serverPort):
         pygame.init()
         self.board = Board()
         self.port = serverPort
@@ -77,9 +77,9 @@ class Server():
             encoded = pickle.dumps((id_user, self.board), protocol=2)
             sock.send(encoded)
 
-    def sendStatsToBalancer(self, balancerSocket):
+    def sendStatsToBalancer(self, s):
         encoded = pickle.dumps(connectedClients)
-        balancerSocket.send(encoded)
+        s.send(encoded)
 
     def run():
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as clientsSocker:
@@ -88,21 +88,14 @@ class Server():
             s.listen(5)
             self.readList.append(s)
 
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as balancerSocket:
-                # s.setblocking(0)
-                # s.bind(('', self.read_list))
-                # s.listen(5)
-                # self.read_list.append(s)
+            while True:
+                # pygame.time.delay(50) # pausa em milisegundos
+                clock.tick(10) # sincronizacao
+                newPlayers, lostConnections, moves, connectedSockets = manageInput(clientsSocker)
+                snackControl = manageGameLogic(newPlayers, lostConnections, moves, snackControl)
+                manageOutput(connectedSockets)
 
+                if len(self.readList) == 1:
+                    break
 
-                while True:
-                    # pygame.time.delay(50) # pausa em milisegundos
-                    clock.tick(10) # sincronizacao
-                    newPlayers, lostConnections, moves, connectedSockets = manageInput(clientsSocker)
-                    snackControl = manageGameLogic(newPlayers, lostConnections, moves, snackControl)
-                    manageOutput(connectedSockets)
-
-                    if len(self.readList) == 1:
-                        break
-
-                    self.sendStatsToBalancer(balancerSocket)
+                self.sendStatsToBalancer()

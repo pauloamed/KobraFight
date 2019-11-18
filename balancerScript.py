@@ -1,7 +1,7 @@
-import Balancer
+from Balancer import Balancer
 
 def main():
-    b = Balancer()
+    b = Balancer(11111)
     b.run()
 
 
