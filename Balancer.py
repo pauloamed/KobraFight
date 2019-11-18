@@ -1,80 +1,95 @@
 from threading import thread
-
 import subprocess
-import atexit 
+import atexit
 
 class Balancer():
     def __init__():
-        self.quantos_clientes_enviados_pro_server = dict()
-        self.quantos_cleintes_conectados_no_server = dict()
-        self.max = 1
-        self.id_do_server2ip_e_porta = dict()
+
+        # key: ip+port, value: id
+        self.serversId = dict()
+
+        # key: ip+port, value: id
+        self.serverFromClient = dict()
+
+        # key: id, value: set of clients in ip+port
+        self.connectedClients = dict()
+        self.pendingClients = dict()
+
+        # key: ip+port, values: UNASGND or ASGND
+        self.clientConns2State = dict()
 
         self.clientsReadList = []
 
-        self.client2server = dict()
-        self.clientConns2State = dict()
+        self.maxPerServer = 1
+        self.serverCount = 0
 
+
+    def genServerPort(self):
+        return 0
 
     def initServer(self):
+        serverCount += 1
         # como criar? processo?
-        portNumber = 1234
+        portNumber = self.genServerPort()
         serverProcess = subprocess.Popen([sys.executable, "server.py", str(portNumber)])
-        time.sleep(2)
-
-        main()
-
-        # Matar o servidor quando o cliente fechar (acho que não está funcionando)
-        atexit.register(killServer)
-        
-        # usar multiprocessing
 
         # retorna (id ou ip+port)
-        self.quantos_clientes_enviados_pro_server[assignedServer] = 0
-        self.quantos_cleintes_conectados_no_server[assignedServer] = 0
-        self.trhreaddoserver() # inicar thread q observa o server
-        pass
+        self.serverId[portNumber] = serverCount
+        self.pendingClients[serverCount] = set()
+        self.connectedClients[serverCount] = set()
+        self.startServerThread(portNumber) # inicar thread q observa o server
+
+        return serverCount
 
     def delServer(self):
         # chamada de SO pra dar kill. multiprocessing consegue fz isso?
         pass
 
-    def caso1(sock):
+    def newClientCase(self, sock):
         conn, info = sock.accept()
         read_list.append(conn)
         ip, port = info
-        cons = (ip + ':' + str(port))
-        self.clientConns2State[cons] = 'UNASGND'
+        client = (ip + ':' + str(port))
+        self.clientConns2State[client] = 'UNASGND'
 
-    def caso2():
+    def unassignedCase(self, client):
         if body == 'OK':
             # designa um server pra ele
             assignedServer = findServer()
-            self.client2server[head] = assignedServer
-            self.quantos_clientes_enviados_pro_server[assignedServer] += 1
+            self.serverFromClient[client] = assignedServer
+            self.pendingClients[assignedServer].insert(client)
+            self.clientConns2State[client] = 'ASGND'
+
             sock.send(assignedServer.encode())
-            self.clientConns2State[head] = 'ASGND'
         else:
             sock.close()
             read_list.remove(sock)
             del self.clientConns2State[head]
 
-    def caso3():
-        assignedServer = self.client2server[head]
+    def assignedClientCase(self, client):
+        assignedServer = self.serverFromClient[client]
+
+        if client not in self.pendingClients[assignedServer]:
+            throw 'Cliente nao conectado ao server passado'
+
+        # remove client from self.pendingClients[assignedServer]
+
         if body == 'SUCCESSFUL':
-            self.quantos_cleintes_conectados_no_server[assignedServer] += 1
+            self.connectedClients[assignedServer].insert(client)
         elif body == 'UNSUCCESSFUL':
-            self.quantos_cleintes_enviados_no_server[assignedServer] -= 1
+            pass
+
         sock.close()
         read_list.remove(sock)
-        del self.clientConns2State[head]
+
+        del self.clientConns2State[client]
 
     def processClientsConns(self, s):
         readable, _, _ = select.select(read_list,[],[])
 
         for sock in readable:
             if sock is s:
-                caso1(sock)
+                self.newClientCase(sock)
             else:
                 data = sock.recv(1048576)
 
@@ -84,12 +99,14 @@ class Balancer():
                     # head tem o ip e porta do cliente
                     # body tem a mensagem
 
-                    if self.clientConns2State[head] == 'UNASGND':
-                        caso2()
-                    elif self.clientConns2State[head] == 'ASGND':
-                        caso3()
+                    client = head
+
+                    if self.clientConns2State[client] == 'UNASGND':
+                        self.unassignedClientCase(client)
+                    elif self.clientConns2State[client] == 'ASGND':
+                        self.assignedClientCase(client)
                     else:
-                        print("i KKKKKK")
+                        throw 'Erro'
                         exit()
                 else:
                     sock.close()
@@ -109,22 +126,25 @@ class Balancer():
 
 
     def findServer(self):
-        serverachado = -1
+        foundServer = -1
 
-        for server, qntd in self.quantos_clientes_enviados_pro_server.items():
-            if qntd < limite:
-                serverachado = server
-                break
+        for serverId in serversId.values():
+            if len(self.connectedClients[serverId]) + len(self.pendingClients[serverId]) < maxPerServer:
+                foundServer = serverId
 
-        if(serverachado == -1):
-            serverachado = self.initServer()
-        return serverachado
+        if(foundServer == -1):
+            foundServer = self.initServer()
+        return foundServer
 
-    def trhreaddoserver(self, servertoconnect):
+    def startServerThread(self, serverPort):
+        host = 'localhost'
+        serverId = self.serverId[serverPort]
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((HOST, PORT))
+            s.connect((host, serverPort))
 
             while True:
-                # pergunta quantos tem
-                # responde quantos tem
-                # atualiza o quantos_cleintes_conectados_no_server
+                data = s.recv(1048576)
+                connectedClients = set(data)
+
+                # fazer diferenca entre self.connectedClients[serverId] e connectedClients
+                # atualizar connectedClients

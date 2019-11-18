@@ -95,7 +95,7 @@ def main():
 
         s.sendall((conn + "_OUT" + ";").encode('ascii'))
 
-# Para criar o servidor  
+# Para criar o servidor
 portNumber = 1234
 serverProcess = subprocess.Popen([sys.executable, "server.py", str(portNumber)])
 time.sleep(2)

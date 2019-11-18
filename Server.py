@@ -3,28 +3,32 @@ import time
 import pickle
 
 class Server():
-    def __init__:
+    def __init__(serverPort):
         pygame.init()
         self.board = Board()
-        self.port = 12345
-        self.read_list = []
-        self.conn2clientId = dict()
+        self.port = serverPort
+        self.readList = []
+        self.connectedClientsIds = dict()
+
+        self.connectedClients = set()
 
 
     def manageInput(s):
-        readable, writeable, error = select.select(self.read_list,[],[])
+        readable, writeable, error = select.select(self.readList,[],[])
 
-        new_players, lost_connections, moves, socks_ok = [], [], [], []
+        newPlayers, lostConnections, moves, connectedSockets = [], [], [], []
 
         for sock in readable:
             if sock is s:
                 conn, info = sock.accept()
-                self.read_list.append(conn)
-                print("connection received from ", info)
+                self.readList.append(conn)
                 ip, port = info
                 cons = (ip + ':' + str(port))
-                self.conn2clientId[cons] = len(self.conn2clientId)
-                new_players.append(self.conn2clientId[cons])
+
+                self.connectedClientsIds[cons] = len(self.connectedClientsIds)
+                self.connectedClients.insert(cons)
+
+                newPlayers.append(self.connectedClientsIds[cons])
 
             else:
                 data = sock.recv(1048576)
@@ -32,38 +36,40 @@ class Server():
                 if data:
                     data = data.decode('ascii').split(';')[0]
                     head, body = data.split('_')
-                    id_user = self.conn2clientId[head]
+                    client = head
+                    idUser = self.connectedClientsIds[client]
 
                     if body == 'OUT':
-                        lost_connections.append(id_user)
+                        lostConnections.append(idUser)
                         sock.close()
-                        self.read_list.remove(sock)
+                        self.readList.remove(sock)
+                        self.connectedClients.remove(client)
                     else:
                         move = body
-                        moves.append((id_user, move))
-                        socks_ok.append((id_user, sock))
+                        moves.append((idUser, move))
+                        connectedSockets.append((idUser, sock))
 
                 else:
                     sock.close()
-                    self.read_list.remove(sock)
+                    self.readList.remove(sock)
 
-        return new_players, lost_connections, moves, socks_ok
+        return newPlayers, lostConnections, moves, connectedSockets
 
-    def manageGameLogic(new_players, lost_connections, moves, checkpoint_500ms):
-        for lost_con in lost_connections:
-            self.board.killSnake(lost_con)
+    def manageGameLogic(newPlayers, lostConnections, moves, snackControl):
+        for lostCon in lostConnections:
+            self.board.killSnake(lostCon)
 
-        for player in new_players:
+        for player in newPlayers:
             self.board.addSnake(player)
 
-        for id_user, move in moves:
-            self.board.update({id_user: move})
+        for idUser, move in moves:
+            self.board.update({idUser: move})
 
-        if time.time() - checkpoint_500ms >= 0.5:
+        if time.time() - snackControl >= 0.5:
             self.board.addSnack()
-            checkpoint_500ms = time.time()
+            snackControl = time.time()
 
-        return checkpoint_500ms
+        return snackControl
 
     def manageOutput(socks_ok):
 
@@ -71,23 +77,32 @@ class Server():
             encoded = pickle.dumps((id_user, self.board), protocol=2)
             sock.send(encoded)
 
-    def sendStatsToBalancer(balancerSocket):
-        pass
+    def sendStatsToBalancer(self, balancerSocket):
+        encoded = pickle.dumps(connectedClients)
+        balancerSocket.send(encoded)
 
     def run():
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as clientsSocker:
             s.setblocking(0)
             s.bind(('', self.read_list))
             s.listen(5)
-            self.read_list.append(s)
+            self.readList.append(s)
+
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as balancerSocket:
+                # s.setblocking(0)
+                # s.bind(('', self.read_list))
+                # s.listen(5)
+                # self.read_list.append(s)
 
 
-            while True:
-                # pygame.time.delay(50) # pausa em milisegundos
-                clock.tick(10) # sincronizacao
-                new_players, lost_connections, moves, socks_ok = manageInput(self.read_list, s)
-                checkpoint_500ms = manageGameLogic(new_players, lost_connections, moves, checkpoint_500ms)
-                manageOutput(socks_ok)
+                while True:
+                    # pygame.time.delay(50) # pausa em milisegundos
+                    clock.tick(10) # sincronizacao
+                    newPlayers, lostConnections, moves, connectedSockets = manageInput(clientsSocker)
+                    snackControl = manageGameLogic(newPlayers, lostConnections, moves, snackControl)
+                    manageOutput(connectedSockets)
 
-                if len(self.read_list) == 1:
-                    break
+                    if len(self.readList) == 1:
+                        break
+
+                    self.sendStatsToBalancer(balancerSocket)
