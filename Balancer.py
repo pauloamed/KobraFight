@@ -77,7 +77,7 @@ class Balancer():
                     elif self.clientConns2State[head] == 'ASGND':
                         caso3()
                     else:
-                        print("FUDEU KKKKKK")
+                        print("i KKKKKK")
                         exit()
                 else:
                     sock.close()

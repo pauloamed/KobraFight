@@ -7,6 +7,9 @@ def manageInput(read_list, s, d):
 
     new_players, lost_connections, moves, socks_ok = [], [], [], []
 
+    print("read_list:" + str(read_list))
+    print("s: " + str(s))
+    print("readable: " + str(readable))
     for sock in readable:
         if sock is s:
             conn, info = sock.accept()
@@ -57,7 +60,7 @@ def manageGameLogic(board, new_players, lost_connections, moves, checkpoint_500m
     return board, checkpoint_500ms
 
 def manageOutput(socks_ok, board):
-    boardEncoded = pickle.dumps(board, protocol=2)
+    # boardEncoded = pickle.dumps(board, protocol=2)
 
     for id_user, sock in socks_ok:
         encoded = pickle.dumps((id_user, board), protocol=2)

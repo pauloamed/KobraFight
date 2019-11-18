@@ -71,6 +71,9 @@ class Server():
             encoded = pickle.dumps((id_user, self.board), protocol=2)
             sock.send(encoded)
 
+    def sendStatsToBalancer(balancerSocket):
+        pass
+
     def run():
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.setblocking(0)
