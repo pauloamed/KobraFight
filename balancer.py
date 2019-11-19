@@ -3,7 +3,7 @@ import signal
 
 
 def main():
-    balancer = Balancer(11112)
+    balancer = Balancer(12346)
     # signal.signal(signal.SIGINT, balancer.stop)
     balancer.run()
 

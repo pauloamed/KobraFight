@@ -23,12 +23,12 @@ def killServer():
 
 def main():
     # host, port = selectIP()
-    host, port = 'localhost', 11112
+    host, port = 'localhost', 12346
     size, grid = 500, 20
 
     client = Client(host, port, size, grid)
 
-    signal.signal(signal.SIGINT, client.stop)
+    # signal.signal(signal.SIGINT, client.stop)
     client.run()
 
 

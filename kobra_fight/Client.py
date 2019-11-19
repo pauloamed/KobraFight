@@ -21,8 +21,8 @@ class Client():
         self.win = pygame.display.set_mode((size + 150, size)) # cria o tabuleiro (janela)
         self.clock = pygame.time.Clock() # clock
 
-        self.balancerHost = None
-        self.balancerPort = None
+        self.balancerHost = host
+        self.balancerPort = port
 
         self.outMsg = "OUT"
         self.delimiterMsg = ";"
@@ -78,15 +78,18 @@ class Client():
 
         serverFeedback = s.recv(1048576)
 
-        if serverFeedback ==
-
-        return True
+        if serverFeedback == self.serverSuccessMsg:
+            return True
+        else:
+            return False
 
     def connectToServerFromBalancer(self, serverSocket):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as balancerSocket:
             balancerSocket.connect((self.balancerHost, self.balancerPort))
 
+            print("Conectado ao balancer")
             serverSpecs = balancerSocket.recv(1048576)
+            print(serverSpecs)
 
             if self.initServerConnection(serverSocket, serverSpecs):
                 balancerSocket.sendall(self.balancerSuccessMsg.encode("ascii"))
@@ -98,7 +101,7 @@ class Client():
     def run(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSocket:
 
-            success, serverSpecs =  self.connectToServerFromBalancer(serverSocket):
+            success, serverSpecs =  self.connectToServerFromBalancer(serverSocket)
 
             if not success:
                 return

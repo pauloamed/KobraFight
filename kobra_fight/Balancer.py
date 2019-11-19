@@ -11,13 +11,13 @@ class Balancer():
 
         self.port = port
 
-        # key: ip+port, value: id
+        # key: port, value: id
         self.serversId = dict()
 
         # key: ip+port, value: id
         self.serverFromClient = dict()
 
-        # key: id, value: set of clients in ip+port
+        # key: id, value: set of clients in port
         self.connectedClients = dict()
         self.pendingClients = dict()
 
@@ -112,15 +112,18 @@ class Balancer():
         del self.clientConns2State[client]
 
     def processClientsConns(self, s):
+        print(self.clientsReadList)
         readable, _, _ = select.select(self.clientsReadList,[],[])
-
+        print(self.clientsReadList)
         for sock in readable:
             if debug:
                 print('>>> Processando socket {}'.format(sock))
+
             if sock is s:
                 self.newClientCase(sock)
             else:
                 data = sock.recv(1048576)
+                print(data)
 
                 if data:
                     data = data.decode('ascii').split(';')[0]
