@@ -1,8 +1,11 @@
 from kobra_fight import Balancer
+import signal
+
 
 def main():
-    b = Balancer(11111)
-    b.run()
+    balancer = Balancer(11112)
+    # signal.signal(signal.SIGINT, balancer.stop)
+    balancer.run()
 
 
 main()

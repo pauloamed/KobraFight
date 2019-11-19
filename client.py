@@ -3,10 +3,8 @@ import pygame
 import tkinter as tk
 from tkinter import simpledialog
 
-from kobra_fight import Board, LoginDialog
+from kobra_fight import Client, LoginDialog
 
-import socket
-import select
 import time
 import sys
 import signal
@@ -24,7 +22,8 @@ def killServer():
     serverProcess.terminate()
 
 def main():
-    host, port = selectIP()
+    # host, port = selectIP()
+    host, port = 'localhost', 11112
     size, grid = 500, 20
 
     client = Client(host, port, size, grid)

@@ -2,6 +2,9 @@ from threading import Thread
 import subprocess
 import atexit
 import socket
+import select
+
+debug = True
 
 class Balancer():
     def __init__(self, port):
@@ -28,6 +31,10 @@ class Balancer():
 
         self.createdThreads = []
 
+        self.flag = True
+
+        if debug:
+            print('>>> Balancer instanciado')
 
     def genServerPort(self):
         return 0
@@ -57,12 +64,19 @@ class Balancer():
 
     def newClientCase(self, sock):
         conn, info = sock.accept()
-        read_list.append(conn)
+        self.clientsReadList.append(conn)
         ip, port = info
         client = (ip + ':' + str(port))
         self.clientConns2State[client] = 'UNASGND'
 
-    def unassignedCase(self, client):
+        if debug:
+            print(">>> Caso de novo client: {}".format(client))
+
+
+    def unassignedClientCase(self, client, body, sock):
+        if debug:
+            print(">>> Caso de cliente unssigned: {}".format(client))
+
         if body == 'OK':
             # designa um server pra ele
             assignedServer = findServer()
@@ -73,10 +87,13 @@ class Balancer():
             sock.send(assignedServer.encode())
         else:
             sock.close()
-            read_list.remove(sock)
-            del self.clientConns2State[head]
+            self.clientsReadList.remove(sock)
+            del self.clientConns2State[client]
 
-    def assignedClientCase(self, client):
+    def assignedClientCase(self, client, body, sock):
+        if debug:
+            print(">>> Caso de cliente assigned: {}".format(client))
+
         assignedServer = self.serverFromClient[client]
 
         if client not in self.pendingClients[assignedServer]:
@@ -90,14 +107,16 @@ class Balancer():
             pass
 
         sock.close()
-        read_list.remove(sock)
+        self.clientsReadList.remove(sock)
 
         del self.clientConns2State[client]
 
     def processClientsConns(self, s):
-        readable, _, _ = select.select(read_list,[],[])
+        readable, _, _ = select.select(self.clientsReadList,[],[])
 
         for sock in readable:
+            if debug:
+                print('>>> Processando socket {}'.format(sock))
             if sock is s:
                 self.newClientCase(sock)
             else:
@@ -112,15 +131,15 @@ class Balancer():
                     client = head
 
                     if self.clientConns2State[client] == 'UNASGND':
-                        self.unassignedClientCase(client)
+                        self.unassignedClientCase(client, body, sock)
                     elif self.clientConns2State[client] == 'ASGND':
-                        self.assignedClientCase(client)
+                        self.assignedClientCase(client, body, sock)
                     else:
                         raise Exception('Erro')
                         exit()
                 else:
                     sock.close()
-                    read_list.remove(sock)
+                    self.clientsReadList.remove(sock)
 
     def run(self):
         # tem que ter o socket dos clientes
@@ -129,14 +148,18 @@ class Balancer():
             s.setblocking(0)
             s.bind(('', self.port))
             s.listen(5)
-            readList.append(s)
+            self.clientsReadList.append(s)
 
-            while True:
+            if debug:
+                print('>>> Socket para clientes inicializado. Porta: {}'.format(self.port))
+
+            while self.flag:
+                if debug:
+                    print('>>> Processando conexoes de clientes')
                 self.processClientsConns(s)
 
         for thread in createdThreads:
             thread.join()
-
 
     def findServer(self):
         foundServer = -1
@@ -158,6 +181,8 @@ class Balancer():
             while True:
                 data = s.recv(1048576)
                 connectedClients = set(data)
-
                 # fazer diferenca entre self.connectedClients[serverId] e connectedClients
                 # atualizar connectedClients
+
+    def stop(self, sig_num, arg):
+        self.flag = False

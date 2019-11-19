@@ -1,6 +1,8 @@
 import pickle
-import Board
+from . import Board
 import pygame
+import socket
+import select
 
 class Client():
     def __init__(self, host, port, size, grid):
@@ -16,8 +18,11 @@ class Client():
         self.flag = True
 
         pygame.init()
-        win = pygame.display.set_mode((size + 150, size)) # cria o tabuleiro (janela)
+        self.win = pygame.display.set_mode((size + 150, size)) # cria o tabuleiro (janela)
         self.clock = pygame.time.Clock() # clock
+
+        self.balancerHost = None
+        self.balancerPort = None
 
     def getNewDir(self):
         for event in pygame.event.get():
@@ -35,7 +40,7 @@ class Client():
 
         return None
 
-    def sendDir(self, s):
+    def sendDir(self, s, conn):
         try:
             newDir = self.getNewDir()
         except:
@@ -53,11 +58,25 @@ class Client():
 
         try:
             id, board = pickle.loads(data)
-            board.draw(win, id)
+            board.draw(self.win, id)
         except:
             return False
 
         return True
+
+    def initServerConnection(self):
+        return True
+
+    def getServerFromBalancer(self, serverSocket):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as balancerSocket:
+            balancerSocket.connect((self.balancerHost, self.balancerPort))
+
+            # iniciar conexao com o balancer
+            # conectar ao balancer
+            if self.initServerConnection(serverSocket):
+                balancerSocket.sendall("OK".encode("ascii"))
+            else:
+                balancerSocket.sendall("NOT OK".encode("ascii"))
 
     def run(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -68,16 +87,16 @@ class Client():
 
             while self.flag:
                 pygame.time.delay(50) # pausa em milisegundos
-                clock.tick(10) # sincronizacao
+                self.clock.tick(10) # sincronizacao
 
-                if !self.sendDir(s):
+                if not self.sendDir(s, conn):
                     break
 
-                if !self.processData(s):
+                if not self.processData(s):
                     print('Failed to process data')
 
             s.sendall((conn + "_OUT" + ";").encode('ascii'))
 
-    def stop(self):
+    def stop(self, sig_num, arg):
         self.flag = False
         pygame.quit()
