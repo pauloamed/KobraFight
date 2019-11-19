@@ -1,7 +1,4 @@
-import math
-import pygame
-import tkinter as tk
-
+from snake_game import Server
 
 def main():
     # --------------- Número da porta passado pelo popen ---------------
