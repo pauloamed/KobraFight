@@ -24,6 +24,13 @@ class Client():
         self.balancerHost = None
         self.balancerPort = None
 
+        self.outMsg = "OUT"
+        self.delimiterMsg = ";"
+        self.balancerSuccessMsg = "OK"
+        self.serverSuccessMsg = "OK"
+        self.balancerFailureMsg = "NOT OK"
+        self.requestServerMsg = "PING"
+
     def getNewDir(self):
         for event in pygame.event.get():
             # event: qualquer evento que acontece (mouse, qlqr tecla, etc)
@@ -64,38 +71,52 @@ class Client():
 
         return True
 
-    def initServerConnection(self):
+    def initServerConnection(self, serverSocket, serverSpecs):
+        serverSocket.connect((self.host, self.port))
+
+        serverSocket.sendall(self.requestServerMsg.encode('ascii'))
+
+        serverFeedback = s.recv(1048576)
+
+        if serverFeedback ==
+
         return True
 
-    def getServerFromBalancer(self, serverSocket):
+    def connectToServerFromBalancer(self, serverSocket):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as balancerSocket:
             balancerSocket.connect((self.balancerHost, self.balancerPort))
 
-            # iniciar conexao com o balancer
-            # conectar ao balancer
-            if self.initServerConnection(serverSocket):
-                balancerSocket.sendall("OK".encode("ascii"))
+            serverSpecs = balancerSocket.recv(1048576)
+
+            if self.initServerConnection(serverSocket, serverSpecs):
+                balancerSocket.sendall(self.balancerSuccessMsg.encode("ascii"))
+                return True, serverSpecs
             else:
-                balancerSocket.sendall("NOT OK".encode("ascii"))
+                balancerSocket.sendall(self.balancerFailureMsg.encode("ascii"))
+                return False, None
 
     def run(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((self.host, self.port))
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSocket:
 
-            ip, port = s.getsockname()
+            success, serverSpecs =  self.connectToServerFromBalancer(serverSocket):
+
+            if not success:
+                return
+
+            ip, port = serverSocket.getsockname()
             conn = (ip + ':' + str(port))
 
             while self.flag:
                 pygame.time.delay(50) # pausa em milisegundos
                 self.clock.tick(10) # sincronizacao
 
-                if not self.sendDir(s, conn):
+                if not self.sendDir(serverSocket, conn):
                     break
 
-                if not self.processData(s):
+                if not self.processData(serverSocket):
                     print('Failed to process data')
 
-            s.sendall((conn + "_OUT" + ";").encode('ascii'))
+            s.sendall((conn + "_" + self.outMsg + self.delimiterMsg).encode('ascii'))
 
     def stop(self, sig_num, arg):
         self.flag = False
