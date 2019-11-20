@@ -3,6 +3,8 @@ import subprocess
 import atexit
 import socket
 import select
+import sys
+import time
 
 debug = True
 
@@ -10,53 +12,60 @@ class Balancer():
     def __init__(self, port):
 
         self.port = port
+        self.host = 'localhost'
 
-        # key: port, value: id
-        self.serversId = dict()
+        self.servers = set()
 
-        # key: ip+port, value: id
+        # key: ip+port, value: port
         self.serverFromClient = dict()
 
-        # key: id, value: set of clients in port
+        # key: port, value: set of clients in port
         self.connectedClients = dict()
         self.pendingClients = dict()
 
-        # key: ip+port, values: UNASGND or ASGND
+        # key: port, values: UNASGND or ASGND
         self.clientConns2State = dict()
 
         self.clientsReadList = []
 
-        self.maxPerServer = 1
+        self.maxPerServer = 3
         self.serverCount = 0
 
         self.createdThreads = []
 
         self.flag = True
 
+        self.delimiterMsg = ";"
+
         if debug:
             print('>>> Balancer instanciado')
 
     def genServerPort(self):
-        return 0
+        if len(self.servers) == 0:
+            return 12349
+        else:
+            return 12350
 
     def initServer(self):
-        serverCount += 1
+        if debug:
+            print(">>> Tentando inicializar um novo server")
+
         # como criar? processo?
         portNumber = self.genServerPort()
         serverProcess = subprocess.Popen([sys.executable, "server.py", str(portNumber)])
+        time.sleep(5)
 
         # retorna (id ou ip+port)
-        self.serverId[portNumber] = serverCount
-        self.pendingClients[serverCount] = set()
-        self.connectedClients[serverCount] = set()
-        self.startServerThread(portNumber) # inicar thread q observa o server
+        self.servers.add(portNumber)
+        self.pendingClients[portNumber] = set()
+        self.connectedClients[portNumber] = set()
 
-        thread = Thread(target = self.startServerThread, args = (portNumber, ))
+        thread = Thread(target = self.watchServerThread, args = (portNumber, ))
         thread.start()
 
         self.createdThreads.append(thread)
 
-        return serverCount
+        return portNumber
 
     def delServer(self):
         # chamada de SO pra dar kill. multiprocessing consegue fz isso?
@@ -79,12 +88,14 @@ class Balancer():
 
         if body == 'OK':
             # designa um server pra ele
-            assignedServer = findServer()
+            assignedServer = self.findServer()
             self.serverFromClient[client] = assignedServer
-            self.pendingClients[assignedServer].insert(client)
+            self.pendingClients[assignedServer].add(client)
             self.clientConns2State[client] = 'ASGND'
 
-            sock.send(assignedServer.encode())
+
+            serverSpecs = "{}_{}".format(self.host, assignedServer)
+            sock.send(serverSpecs.encode('ascii'))
         else:
             sock.close()
             self.clientsReadList.remove(sock)
@@ -102,7 +113,7 @@ class Balancer():
         # remove client from self.pendingClients[assignedServer]
 
         if body == 'SUCCESSFUL':
-            self.connectedClients[assignedServer].insert(client)
+            self.connectedClients[assignedServer].add(client)
         elif body == 'UNSUCCESSFUL':
             pass
 
@@ -111,15 +122,15 @@ class Balancer():
 
         del self.clientConns2State[client]
 
-    def processClientsConns(self, s):
-        print(self.clientsReadList)
+    def processClientsConns(self, clientsSocket):
+
         readable, _, _ = select.select(self.clientsReadList,[],[])
-        print(self.clientsReadList)
+
         for sock in readable:
             if debug:
                 print('>>> Processando socket {}'.format(sock))
 
-            if sock is s:
+            if sock is clientsSocket:
                 self.newClientCase(sock)
             else:
                 data = sock.recv(1048576)
@@ -147,44 +158,54 @@ class Balancer():
     def run(self):
         # tem que ter o socket dos clientes
         # tem q um socket para cada servidor
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.setblocking(0)
-            s.bind(('', self.port))
-            s.listen(5)
-            self.clientsReadList.append(s)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as clientsSocket:
+            clientsSocket.setblocking(0)
+            clientsSocket.bind(('', self.port))
+            clientsSocket.listen(5)
+            self.clientsReadList.append(clientsSocket)
 
             if debug:
                 print('>>> Socket para clientes inicializado. Porta: {}'.format(self.port))
 
             while self.flag:
-                if debug:
-                    print('>>> Processando conexoes de clientes')
-                self.processClientsConns(s)
+                # if debug:
+                    # print('>>> Processando conexoes de clientes')
+                self.processClientsConns(clientsSocket)
 
         for thread in createdThreads:
             thread.join()
 
     def findServer(self):
+        if debug:
+            print(">>> Tentando achar server")
         foundServer = -1
 
-        for serverId in serversId.values():
-            if len(self.connectedClients[serverId]) + len(self.pendingClients[serverId]) < maxPerServer:
-                foundServer = serverId
+        for serverPort in self.servers:
+            if len(self.connectedClients[serverPort]) + len(self.pendingClients[serverPort]) < self.maxPerServer:
+                foundServer = serverPort
 
         if(foundServer == -1):
             foundServer = self.initServer()
         return foundServer
 
+    def prepareMsg(self, msg, conn):
+        return (conn + "_" + msg + self.delimiterMsg).encode('ascii')
+
     def watchServerThread(self, serverPort):
         host = 'localhost'
-        serverId = self.serverId[serverPort]
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((host, serverPort))
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as watchedServerSocket:
+            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + host + " " + str(serverPort))
+            watchedServerSocket.connect((host, serverPort))
+
+            ip, port = watchedServerSocket.getsockname()
+            conn = (ip + ':' + str(port))
 
             while True:
-                data = s.recv(1048576)
-                connectedClients = set(data)
-                # fazer diferenca entre self.connectedClients[serverId] e connectedClients
+                data = watchedServerSocket.recv(1048576)
+                print(data.decode())
+                watchedServerSocket.send(self.prepareMsg("oi bb", conn))
+                # connectedClients = set(data)
+                # fazer diferenca entre self.connectedClients[serverPort] e connectedClients
                 # atualizar connectedClients
 
     def stop(self, sig_num, arg):

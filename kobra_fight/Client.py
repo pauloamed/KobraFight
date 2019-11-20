@@ -4,6 +4,9 @@ import pygame
 import socket
 import select
 
+debug = True
+
+
 class Client():
     def __init__(self, host, port, size, grid):
         self.allowedKeys = [
@@ -30,6 +33,16 @@ class Client():
         self.serverSuccessMsg = "OK"
         self.balancerFailureMsg = "NOT OK"
         self.requestServerMsg = "PING"
+        self.unassignedMsg = "OK"
+
+        self.connServer = None
+        self.connBalancer = None
+
+    def prepareMsg(self, msg, dest):
+        if dest == 'server':
+            return (self.connServer + "_" + msg + self.delimiterMsg).encode('ascii')
+        else:
+            return (self.connBalancer + "_" + msg + self.delimiterMsg).encode('ascii')
 
     def getNewDir(self):
         for event in pygame.event.get():
@@ -47,16 +60,16 @@ class Client():
 
         return None
 
-    def sendDir(self, s, conn):
+    def sendDir(self, s):
         try:
             newDir = self.getNewDir()
         except:
             return False
 
         if newDir:
-            s.sendall((conn + "_" + newDir + ";").encode('ascii'))
+            s.sendall(self.prepareMsg(newDir, 'server'))
         else:
-            s.sendall((conn + "_NO" + ";").encode('ascii'))
+            s.sendall(self.prepareMsg('NO', 'server'))
 
         return True
 
@@ -72,11 +85,15 @@ class Client():
         return True
 
     def initServerConnection(self, serverSocket, serverSpecs):
-        serverSocket.connect((self.host, self.port))
+        print(serverSpecs)
+        serverSocket.connect((serverSpecs[0], int(serverSpecs[1])))
+        ip, port = serverSocket.getsockname()
+        self.connServer = (ip + ':' + str(port))
 
-        serverSocket.sendall(self.requestServerMsg.encode('ascii'))
+        serverSocket.sendall(self.prepareMsg(self.requestServerMsg, 'server'))
 
-        serverFeedback = s.recv(1048576)
+        serverFeedback = serverSocket.recv(1048576)
+        serverFeedback = serverFeedback.decode()
 
         if serverFeedback == self.serverSuccessMsg:
             return True
@@ -87,15 +104,20 @@ class Client():
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as balancerSocket:
             balancerSocket.connect((self.balancerHost, self.balancerPort))
 
-            print("Conectado ao balancer")
+            ip, port = balancerSocket.getsockname()
+            self.connBalancer = (ip + ':' + str(port))
+
+            balancerSocket.sendall(self.prepareMsg(self.unassignedMsg, 'balancer'))
+
             serverSpecs = balancerSocket.recv(1048576)
-            print(serverSpecs)
+            serverSpecs = serverSpecs.decode()
+            serverSpecs = serverSpecs.split('_')
 
             if self.initServerConnection(serverSocket, serverSpecs):
-                balancerSocket.sendall(self.balancerSuccessMsg.encode("ascii"))
+                balancerSocket.sendall(self.prepareMsg(self.balancerSuccessMsg, 'balancer'))
                 return True, serverSpecs
             else:
-                balancerSocket.sendall(self.balancerFailureMsg.encode("ascii"))
+                balancerSocket.sendall(self.prepareMsg(self.balancerFailureMsg, 'balancer'))
                 return False, None
 
     def run(self):
@@ -106,20 +128,18 @@ class Client():
             if not success:
                 return
 
-            ip, port = serverSocket.getsockname()
-            conn = (ip + ':' + str(port))
-
             while self.flag:
                 pygame.time.delay(50) # pausa em milisegundos
                 self.clock.tick(10) # sincronizacao
 
-                if not self.sendDir(serverSocket, conn):
+                if not self.sendDir(serverSocket):
                     break
+
 
                 if not self.processData(serverSocket):
                     print('Failed to process data')
 
-            s.sendall((conn + "_" + self.outMsg + self.delimiterMsg).encode('ascii'))
+            serverSocket.sendall(self.prepareMsg(self.outMsg, 'server'))
 
     def stop(self, sig_num, arg):
         self.flag = False

@@ -12,18 +12,18 @@ import subprocess
 import atexit
 
 
+from deef import port
+
+
 def selectIP():
     root = tk.Tk()
     root.withdraw()
     d = LoginDialog(root, "Login")
     return (d.r1, int(d.r2))
 
-def killServer():
-    serverProcess.terminate()
-
 def main():
     # host, port = selectIP()
-    host, port = 'localhost', 12346
+    host, _ = 'localhost', port
     size, grid = 500, 20
 
     client = Client(host, port, size, grid)
@@ -31,14 +31,4 @@ def main():
     # signal.signal(signal.SIGINT, client.stop)
     client.run()
 
-
-
-    # Para criar o servidor
-    portNumber = 1234
-    serverProcess = subprocess.Popen([sys.executable, "server.py", str(portNumber)])
-    time.sleep(2)
-
 main()
-
-# Matar o servidor quando o cliente fechar (acho que não está funcionando)
-atexit.register(killServer)
