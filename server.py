@@ -1,4 +1,5 @@
-from snake_game import Server
+from kobra_fight import Server
+import sys
 
 def main():
     # --------------- Número da porta passado pelo popen ---------------
