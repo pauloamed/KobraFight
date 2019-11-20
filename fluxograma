@@ -1,0 +1,17 @@
+- inicia balanceador
+- balanceador fica esperando
+- inicia cliente
+- cliente se conecta com balanceador
+    - balancador diz que cliente eh UNASGND
+- cliente manda "requestServerMsg" para balanceador
+- balanceador le mensagem de cliente
+    - balanceador responde com porta de server
+        - se nao tem um server que aceita o cliente
+            - cria um server (como saber que o server foi bem criado?????)
+                - uma solucao seria o server ser cliente do balancer e so quando ele manda um feedback de bem criado para o balaner que o server fica disponivel
+            - thread eh criada para observar server
+                - se o server nao foi bem criado, da ruim
+    - balanceador muda estado de cliente para ASGND
+- cliente le mensagem de balanceador e tenta se conectar com server
+- cliente envia feedback para balanceador e desconecta
+- balanceador fica observando os servers com threads e esperando novos clientes
