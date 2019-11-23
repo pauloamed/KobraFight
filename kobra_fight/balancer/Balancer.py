@@ -14,7 +14,7 @@ class Balancer():
         self.port = port
         self.host = 'localhost'
 
-        self.servers = set()
+        self.servers = list()
 
         # key: ip+port, value: port
         self.serverFromClient = dict()
@@ -28,7 +28,7 @@ class Balancer():
 
         self.clientsReadList = []
 
-        self.maxPerServer = 3
+        self.maxPerServer = 1
         self.serverCount = 0
 
         self.createdThreads = []
@@ -56,7 +56,7 @@ class Balancer():
         time.sleep(5)
 
         # retorna (id ou ip+port)
-        self.servers.add(portNumber)
+        self.servers.append(portNumber)
         self.pendingClients[portNumber] = set()
         self.connectedClients[portNumber] = set()
 
@@ -66,6 +66,10 @@ class Balancer():
         self.createdThreads.append(thread)
 
         return portNumber
+
+    def isServerFull(self, serverPos):
+        serverPort = self.servers[serverPos]
+        return len(self.connectedClients[serverPort]) + len(self.pendingClients[serverPort]) < self.maxPerServer
 
     def delServer(self):
         # chamada de SO pra dar kill. multiprocessing consegue fz isso?
@@ -180,9 +184,9 @@ class Balancer():
             print(">>> Tentando achar server")
         foundServer = -1
 
-        for serverPort in self.servers:
-            if len(self.connectedClients[serverPort]) + len(self.pendingClients[serverPort]) < self.maxPerServer:
-                foundServer = serverPort
+        for i in range(len(self.servers)):
+            if self.isServerFull(i):
+                foundServer = self.servers[i]
 
         if(foundServer == -1):
             foundServer = self.initServer()
