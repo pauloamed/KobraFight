@@ -2,6 +2,8 @@ import socket
 import pygame
 import tkinter as tk
 
+import sys
+
 from select import select
 from time import time
 from pickle import dumps
@@ -21,8 +23,6 @@ class Server():
         self.ip_do_balaneador = None
         self.balancerMsg = "BAL"
         self.serverSuccessMsg = "OK"
-
-        print("pqp ein man")
 
 
     def manageInput(self, clientsSocket):
@@ -113,7 +113,8 @@ class Server():
             clientsSocket.listen(5)
             self.readList.append(clientsSocket)
 
-            print("DEU BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOM")
+            sys.stdout.write("OK\n")
+            sys.stdout.flush()
             pygame.init()
 
             while True:

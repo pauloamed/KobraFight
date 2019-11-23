@@ -1,8 +1,10 @@
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+
 from kobra_fight import Server
 import sys
-import os
 
-print("oi")
+# print("oi")
 
 def main():
     # --------------- Número da porta passado pelo popen ---------------

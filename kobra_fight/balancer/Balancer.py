@@ -1,10 +1,11 @@
 from threading import Thread
-from subprocess import Popen, TimeoutExpired, PIPE
+from subprocess import Popen, TimeoutExpired, PIPE, STDOUT
 import atexit
 import socket
 from select import select
 from sys import executable
 from time import sleep
+import random
 
 debug = True
 
@@ -14,17 +15,19 @@ class Balancer():
         self.port = port
         self.host = 'localhost'
 
-        self.servers = list()
+        self.servers = []
+
+        self.popenFromServer = {}
 
         # key: ip+port, value: port
-        self.serverFromClient = dict()
+        self.serverFromClient = {}
 
         # key: port, value: set of clients in port
-        self.connectedClients = dict()
-        self.pendingClients = dict()
+        self.connectedClients = {}
+        self.pendingClients = {}
 
         # key: port, values: UNASGND or ASGND
-        self.clientConns2State = dict()
+        self.clientConns2State = {}
 
         self.clientsReadList = []
 
@@ -41,35 +44,32 @@ class Balancer():
             print('>>> Balancer instanciado')
 
     def genServerPort(self):
-        if len(self.servers) == 0:
-            return 11120
-        else:
-            return 11118
+        return random.randint(1000, 64000)
 
     def initServer(self):
         if debug:
             print(">>> Tentando inicializar um novo server")
 
-        # como criar? processo?
-        portNumber = self.genServerPort()
-        serverProcess = Popen([executable, "server.py", str(portNumber)])
-        sleep(5)
-        # serverProcess = Popen([executable, "server.py", str(portNumber)], stdout=PIPE)
-        print(serverProcess)
-        # try:
-        # outs, errs = serverProcess.communicate(timeout=30)
-        # print("TO NO BALNCEEER", outs, errs)
-        # except TimeoutExpired:
-            # serverProcess.kill()
-            # outs, errs = serverProcess.communicate()
+        portNumber = None
+        while True:
+            portNumber = self.genServerPort()
+            print("porta gerada: {}".format(portNumber))
+            serverProcess = Popen([executable, "server.py", str(portNumber)], stdout=PIPE, stderr=PIPE)
+            output = None
+            while True:
+                output = serverProcess.stdout.readline()
+                print("ooutput lido: {}".format(output.decode()))
+                if output:
+                    print("vo da break")
+                    break
+            if output.decode().strip() == "OK":
+                print("Era OKK")
+                break
 
-        # print(serverProcess)
-
-
-        # retorna (id ou ip+port)
         self.servers.append(portNumber)
         self.pendingClients[portNumber] = set()
         self.connectedClients[portNumber] = set()
+        self.popenFromServer[portNumber] = serverProcess
 
         # print(serverProcess)
         thread = Thread(target = self.watchServerThread, args = (portNumber, ))
@@ -84,8 +84,8 @@ class Balancer():
         return len(self.connectedClients[serverPort]) + len(self.pendingClients[serverPort]) >= self.maxPerServer
 
     def delServer(self):
-        # chamada de SO pra dar kill. multiprocessing consegue fz isso?
-        pass
+        for subp in self.popenFromServer.values():
+            subp.kill()
 
     def newClientCase(self, sock):
         conn, info = sock.accept()
