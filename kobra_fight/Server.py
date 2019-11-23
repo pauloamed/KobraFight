@@ -1,10 +1,10 @@
-import select
-import time
-import pickle
 import socket
 import pygame
-import math
 import tkinter as tk
+
+from select import select
+from time import time
+from pickle import dumps
 from kobra_fight import Board
 
 class Server():
@@ -25,7 +25,7 @@ class Server():
 
 
     def manageInput(self, clientsSocket):
-        readable, writeable, error = select.select(self.readList,[],[])
+        readable, writeable, error = select(self.readList,[],[])
 
         newPlayers, lostConnections, moves, connectedSockets = [], [], [], []
 
