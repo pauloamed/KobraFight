@@ -18,9 +18,21 @@
                     - sugiro um while true, esperando o feedback do server ou outro server liberar
     - balanceador muda estado de cliente para ASGND
 - cliente le mensagem de balanceador
-    - server retorna "serverSuccessMsg" se ocorrer tudo ok
-    - caso contrario, a conexao eh considerada como falha
-- cliente envia feedback para balanceador
+- cliente tenta conectar com server
+    - server retorna para cliente "serverSuccessMsg" se ocorrer tudo ok
+    - caso contrario, a conexao do cliente com o server eh considerada como falha
+- cliente envia feedback para balanceador sobre conexao com server
     - sucesso de cliente para balanceador: "balancerSuccessMsg"
     - insucesso de cliente para balanceador: "balancerFailureMsg"
 - balanceador fica observando os servers com threads e esperando novos clientes
+
+
+
+
+
+
+
+
+
+delay nas cargas para o server garantir ok
+POPEN do multiprocess pode garantir sincornia do server
