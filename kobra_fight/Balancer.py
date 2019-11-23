@@ -1,10 +1,10 @@
 from threading import Thread
-import subprocess
+from subprocess import Popen
 import atexit
 import socket
-import select
-import sys
-import time
+from select import select
+from sys import executable
+from time import sleep
 
 debug = True
 
@@ -52,8 +52,8 @@ class Balancer():
 
         # como criar? processo?
         portNumber = self.genServerPort()
-        serverProcess = subprocess.Popen([sys.executable, "server.py", str(portNumber)])
-        time.sleep(5)
+        serverProcess = Popen([executable, "server.py", str(portNumber)])
+        sleep(5)
 
         # retorna (id ou ip+port)
         self.servers.add(portNumber)
@@ -124,7 +124,7 @@ class Balancer():
 
     def processClientsConns(self, clientsSocket):
 
-        readable, _, _ = select.select(self.clientsReadList,[],[])
+        readable, _, _ = select(self.clientsReadList,[],[])
 
         for sock in readable:
             if debug:

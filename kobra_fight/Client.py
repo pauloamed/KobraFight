@@ -1,11 +1,10 @@
-import pickle
-from . import Board
 import pygame
 import socket
-import select
+
+from pickle import loads
+from . import Board
 
 debug = True
-
 
 class Client():
     def __init__(self, host, port, size, grid):
