@@ -13,14 +13,6 @@ class RoundRobin(Balancer):
         for i in range(numInitServers):
             self.initServer()
 
-    def genServerPort(self):
-        if len(self.servers) == 0:
-            return 11143
-        if len(self.servers) == 1:
-            return 11144
-        if len(self.servers) == 2:
-            return 11145
-
 
     def findServer(self):
         if debug:

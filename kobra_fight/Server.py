@@ -18,11 +18,14 @@ class Server():
         self.connectedClientsIds = dict()
         self.connectedClients = set()
         self.newClients = set()
+        self.idFromip = {}
 
-        self.socket_do_balanceador = None
-        self.ip_do_balaneador = None
+        self.balancerSocket = None
+        self.balancerIp = None
         self.balancerMsg = "BAL"
         self.serverSuccessMsg = "OK"
+        self.delimiterBody = "_"
+        self.delimiterId = "#"
 
 
     def manageInput(self, clientsSocket):
@@ -43,30 +46,31 @@ class Server():
 
                 if data:
                     data = data.decode('ascii').split(';')[0]
-                    head, body = data.split('_')
-                    client = head
+                    head, body = data.split(self.delimiterBody)
+                    clientIp, clientId = head.split(self.delimiterId)
+
+                    if clientIp == self.balancerIp:
+                        continue
 
                     if body == self.balancerMsg:
-                        self.socket_do_balanceador = sock
-                        self.ip_do_balaneador = client
-                        continue
-
-                    if head == self.ip_do_balaneador:
-                        continue
-
-                    if client in self.newClients:
                         sock.send(self.serverSuccessMsg.encode('ascii'))
-                        self.newClients.remove(client)
-                        self.connectedClientsIds[client] = len(self.connectedClientsIds)
-                        self.connectedClients.add(client)
-                        newPlayers.append(self.connectedClientsIds[client])
+                        self.balancerSocket = sock
+                        self.balancerIp = clientIp
+                        continue
+
+                    if clientIp in self.newClients:
+                        sock.send(self.serverSuccessMsg.encode('ascii'))
+                        self.newClients.remove(clientIp)
+                        self.connectedClientsIds[clientIp] = len(self.connectedClientsIds)
+                        self.connectedClients.add(clientId)
+                        newPlayers.append(self.connectedClientsIds[clientIp])
                     else:
-                        idUser = self.connectedClientsIds[client]
+                        idUser = self.connectedClientsIds[clientIp]
                         if body == 'OUT':
                             lostConnections.append(idUser)
                             sock.close()
                             self.readList.remove(sock)
-                            self.connectedClients.remove(client)
+                            self.connectedClients.remove(clientId)
                         else:
                             move = body
                             moves.append((idUser, move))
@@ -101,8 +105,9 @@ class Server():
             sock.send(encoded)
 
     def sendStatsToBalancer(self):
-        # encoded = pickle.dumps(connectedClients)
-        self.socket_do_balanceador.send("oi bb".encode('ascii'))
+        encoded = dumps(self.connectedClients)
+        # sys.stderr.write(str(self.port) + " " + str(self.connectedClients) + "\n")
+        self.balancerSocket.send(encoded)
 
     def run(self):
         snackControl = time()
@@ -127,5 +132,5 @@ class Server():
                 if len(self.readList) == 1:
                     break
 
-                if self.socket_do_balanceador:
+                if self.balancerSocket:
                     self.sendStatsToBalancer()

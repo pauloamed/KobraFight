@@ -11,22 +11,23 @@ import signal
 import subprocess
 import atexit
 
-
-from deef import port
-
-
-def selectIP():
-    root = tk.Tk()
-    root.withdraw()
-    d = LoginDialog(root, "Login")
-    return (d.r1, int(d.r2))
+# def selectIP():
+#     root = tk.Tk()
+#     root.withdraw()
+#     d = LoginDialog(root, "Login")
+#     return (d.r1, int(d.r2))
 
 def main():
-    # host, port = selectIP()
+    param = sys.argv[1:]
+    port = int(param[0])
+    id = int(param[1])
+
     host, _ = 'localhost', port
     size, grid = 500, 20
 
-    client = Client(host, port, size, grid)
+
+
+    client = Client(host, port, id, size, grid)
 
     # signal.signal(signal.SIGINT, client.stop)
     client.run()

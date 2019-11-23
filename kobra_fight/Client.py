@@ -7,7 +7,7 @@ from . import Board
 debug = True
 
 class Client():
-    def __init__(self, host, port, size, grid):
+    def __init__(self, host, port, id, size, grid):
         self.allowedKeys = [
             (pygame.K_LEFT, "left"),
             (pygame.K_RIGHT, "right"),
@@ -15,6 +15,7 @@ class Client():
             (pygame.K_DOWN, "down")
         ]
 
+        self.id = str(id)
         self.host = host
         self.port = port
         self.flag = True
@@ -28,20 +29,22 @@ class Client():
 
         self.outMsg = "OUT"
         self.delimiterMsg = ";"
+        self.delimiterBody = "_"
         self.balancerSuccessMsg = "OK"
         self.serverSuccessMsg = "OK"
         self.balancerFailureMsg = "NOT OK"
         self.requestServerMsg = "PING"
         self.unassignedMsg = "OK"
+        self.delimiterId = "#"
 
         self.connServer = None
         self.connBalancer = None
 
     def prepareMsg(self, msg, dest):
         if dest == 'server':
-            return (self.connServer + "_" + msg + self.delimiterMsg).encode('ascii')
+            return (self.connServer + self.delimiterId + self.id + self.delimiterBody + msg + self.delimiterMsg).encode('ascii')
         else:
-            return (self.connBalancer + "_" + msg + self.delimiterMsg).encode('ascii')
+            return (self.connBalancer + self.delimiterId + self.id + self.delimiterBody + msg + self.delimiterMsg).encode('ascii')
 
     def getNewDir(self):
         for event in pygame.event.get():

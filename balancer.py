@@ -1,7 +1,6 @@
 from kobra_fight.balancer import Balancer, RoundRobin
 import signal
-
-from deef import port
+import sys
 
 balancer = None
 
@@ -14,7 +13,11 @@ signal.signal(signal.SIGINT, SIGINT_handler)
 
 def main():
     global balancer
-    # balancer = RoundRobin(port, 3)
+
+    param = sys.argv[1:]
+    port = int(param[0])
+
+    # balancer = RoundRobin(port, 2)
     balancer = Balancer(port)
     # signal.signal(signal.SIGINT, balancer.stop)
     balancer.run()

@@ -5,6 +5,7 @@ import socket
 from select import select
 from sys import executable
 from time import sleep
+from pickle import loads
 import random
 
 debug = True
@@ -39,6 +40,8 @@ class Balancer():
         self.flag = True
 
         self.delimiterMsg = ";"
+        self.delimiterId = "#"
+        self.delimiterBody = "_"
 
         if debug:
             print('>>> Balancer instanciado')
@@ -53,17 +56,13 @@ class Balancer():
         portNumber = None
         while True:
             portNumber = self.genServerPort()
-            print("porta gerada: {}".format(portNumber))
-            serverProcess = Popen([executable, "server.py", str(portNumber)], stdout=PIPE, stderr=PIPE)
+            serverProcess = Popen([executable, "server.py", str(portNumber)], stdout=PIPE)
             output = None
             while True:
                 output = serverProcess.stdout.readline()
-                print("ooutput lido: {}".format(output.decode()))
                 if output:
-                    print("vo da break")
                     break
             if output.decode().strip() == "OK":
-                print("Era OKK")
                 break
 
         self.servers.append(portNumber)
@@ -91,23 +90,23 @@ class Balancer():
         conn, info = sock.accept()
         self.clientsReadList.append(conn)
         ip, port = info
-        client = (ip + ':' + str(port))
-        self.clientConns2State[client] = 'UNASGND'
+        clientIp = (ip + ':' + str(port))
+        self.clientConns2State[clientIp] = 'UNASGND'
 
         if debug:
-            print(">>> Caso de novo client: {}".format(client))
+            print(">>> Caso de novo client: {}".format(clientIp))
 
 
-    def unassignedClientCase(self, client, body, sock):
+    def unassignedClientCase(self, clientIp, clientId, body, sock):
         if debug:
-            print(">>> Caso de cliente unssigned: {}".format(client))
+            print(">>> Caso de cliente unssigned: {}".format(clientIp))
 
         if body == 'OK':
             # designa um server pra ele
             assignedServer = self.findServer()
-            self.serverFromClient[client] = assignedServer
-            self.pendingClients[assignedServer].add(client)
-            self.clientConns2State[client] = 'ASGND'
+            self.serverFromClient[clientIp] = assignedServer
+            self.pendingClients[assignedServer].add(clientId)
+            self.clientConns2State[clientIp] = 'ASGND'
 
 
             serverSpecs = "{}_{}".format(self.host, assignedServer)
@@ -115,28 +114,29 @@ class Balancer():
         else:
             sock.close()
             self.clientsReadList.remove(sock)
-            del self.clientConns2State[client]
+            del self.clientConns2State[clientIp]
 
-    def assignedClientCase(self, client, body, sock):
+    def assignedClientCase(self, clientIp, clientId, body, sock):
         if debug:
-            print(">>> Caso de cliente assigned: {}".format(client))
+            print(">>> Caso de cliente assigned: {}".format(clientIp))
 
-        assignedServer = self.serverFromClient[client]
+        assignedServer = self.serverFromClient[clientIp]
 
-        if client not in self.pendingClients[assignedServer]:
+        if clientId not in self.pendingClients[assignedServer]:
             raise Exception('Cliente nao conectado ao server passado')
 
         # remove client from self.pendingClients[assignedServer]
+        self.pendingClients[assignedServer].remove(clientId)
 
         if body == 'SUCCESSFUL':
-            self.connectedClients[assignedServer].add(client)
+            self.connectedClients[assignedServer].add(clientId)
         elif body == 'UNSUCCESSFUL':
             pass
 
         sock.close()
         self.clientsReadList.remove(sock)
 
-        del self.clientConns2State[client]
+        del self.clientConns2State[clientIp]
 
     def processClientsConns(self, clientsSocket):
 
@@ -154,16 +154,15 @@ class Balancer():
 
                 if data:
                     data = data.decode('ascii').split(';')[0]
-                    head, body = data.split('_')
+                    head, body = data.split(self.delimiterBody)
+                    clientIp, clientId = head.split(self.delimiterId)
                     # head tem o ip e porta do cliente
                     # body tem a mensagem
 
-                    client = head
-
-                    if self.clientConns2State[client] == 'UNASGND':
-                        self.unassignedClientCase(client, body, sock)
-                    elif self.clientConns2State[client] == 'ASGND':
-                        self.assignedClientCase(client, body, sock)
+                    if self.clientConns2State[clientIp] == 'UNASGND':
+                        self.unassignedClientCase(clientIp, clientId, body, sock)
+                    elif self.clientConns2State[clientIp] == 'ASGND':
+                        self.assignedClientCase(clientIp, clientId, body, sock)
                     else:
                         raise Exception('Erro')
                         exit()
@@ -205,24 +204,25 @@ class Balancer():
         return foundServer
 
     def prepareMsg(self, msg, conn):
-        return (conn + "_" + msg + self.delimiterMsg).encode('ascii')
+        return (conn + self.delimiterId + "-1" + self.delimiterBody + msg + self.delimiterMsg).encode('ascii')
 
     def watchServerThread(self, serverPort):
         host = 'localhost'
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as watchedServerSocket:
-            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + host + " " + str(serverPort))
+            # print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + host + " " + str(serverPort))
             watchedServerSocket.connect((host, serverPort))
 
             ip, port = watchedServerSocket.getsockname()
             conn = (ip + ':' + str(port))
 
             while True:
+                watchedServerSocket.send(self.prepareMsg("BAL", conn))
                 data = watchedServerSocket.recv(1048576)
-                print(data.decode())
-                watchedServerSocket.send(self.prepareMsg("oi bb", conn))
-                # connectedClients = set(data)
-                # fazer diferenca entre self.connectedClients[serverPort] e connectedClients
-                # atualizar connectedClients
+
+                if data[:2] == "OK".encode('ascii'):
+                    print(">>> Balancer conectado ao server de porta {}".format(serverPort))
+                else:
+                    self.connectedClients[serverPort] = loads(data)
 
     def stop(self, sig_num, arg):
         self.flag = False
