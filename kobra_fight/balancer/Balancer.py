@@ -1,5 +1,5 @@
 from threading import Thread
-from subprocess import Popen
+from subprocess import Popen, TimeoutExpired, PIPE
 import atexit
 import socket
 from select import select
@@ -28,7 +28,7 @@ class Balancer():
 
         self.clientsReadList = []
 
-        self.maxPerServer = 1
+        self.maxPerServer = 2
         self.serverCount = 0
 
         self.createdThreads = []
@@ -42,9 +42,9 @@ class Balancer():
 
     def genServerPort(self):
         if len(self.servers) == 0:
-            return 12349
+            return 11120
         else:
-            return 12350
+            return 11118
 
     def initServer(self):
         if debug:
@@ -54,12 +54,24 @@ class Balancer():
         portNumber = self.genServerPort()
         serverProcess = Popen([executable, "server.py", str(portNumber)])
         sleep(5)
+        # serverProcess = Popen([executable, "server.py", str(portNumber)], stdout=PIPE)
+        print(serverProcess)
+        # try:
+        # outs, errs = serverProcess.communicate(timeout=30)
+        # print("TO NO BALNCEEER", outs, errs)
+        # except TimeoutExpired:
+            # serverProcess.kill()
+            # outs, errs = serverProcess.communicate()
+
+        # print(serverProcess)
+
 
         # retorna (id ou ip+port)
         self.servers.append(portNumber)
         self.pendingClients[portNumber] = set()
         self.connectedClients[portNumber] = set()
 
+        # print(serverProcess)
         thread = Thread(target = self.watchServerThread, args = (portNumber, ))
         thread.start()
 
@@ -69,7 +81,7 @@ class Balancer():
 
     def isServerFull(self, serverPos):
         serverPort = self.servers[serverPos]
-        return len(self.connectedClients[serverPort]) + len(self.pendingClients[serverPort]) < self.maxPerServer
+        return len(self.connectedClients[serverPort]) + len(self.pendingClients[serverPort]) >= self.maxPerServer
 
     def delServer(self):
         # chamada de SO pra dar kill. multiprocessing consegue fz isso?
@@ -185,7 +197,7 @@ class Balancer():
         foundServer = -1
 
         for i in range(len(self.servers)):
-            if self.isServerFull(i):
+            if not self.isServerFull(i):
                 foundServer = self.servers[i]
 
         if(foundServer == -1):

@@ -9,7 +9,6 @@ from kobra_fight import Board
 
 class Server():
     def __init__(self, serverPort):
-        pygame.init()
         self.board = Board()
         self.port = serverPort
         self.readList = []
@@ -22,6 +21,8 @@ class Server():
         self.ip_do_balaneador = None
         self.balancerMsg = "BAL"
         self.serverSuccessMsg = "OK"
+
+        print("pqp ein man")
 
 
     def manageInput(self, clientsSocket):
@@ -87,16 +88,16 @@ class Server():
         for idUser, move in moves:
             self.board.update({idUser: move})
 
-        if time.time() - snackControl >= 0.5:
+        if time() - snackControl >= 0.5:
             self.board.addSnack()
-            snackControl = time.time()
+            snackControl = time()
 
         return snackControl
 
     def manageOutput(self, socks_ok):
 
         for id_user, sock in socks_ok:
-            encoded = pickle.dumps((id_user, self.board), protocol=2)
+            encoded = dumps((id_user, self.board), protocol=2)
             sock.send(encoded)
 
     def sendStatsToBalancer(self):
@@ -104,13 +105,16 @@ class Server():
         self.socket_do_balanceador.send("oi bb".encode('ascii'))
 
     def run(self):
-        snackControl = time.time()
+        snackControl = time()
         clock = pygame.time.Clock()
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as clientsSocket:
             clientsSocket.setblocking(0)
             clientsSocket.bind(('', self.port))
             clientsSocket.listen(5)
             self.readList.append(clientsSocket)
+
+            print("DEU BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOM")
+            pygame.init()
 
             while True:
                 # pygame.time.delay(50) # pausa em milisegundos

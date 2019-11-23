@@ -76,7 +76,7 @@ class Client():
         data = s.recv(1048576)
 
         try:
-            id, board = pickle.loads(data)
+            id, board = loads(data)
             board.draw(self.win, id)
         except:
             return False

@@ -1,10 +1,12 @@
 from kobra_fight import Server
 import sys
+import os
+
+print("oi")
 
 def main():
     # --------------- Número da porta passado pelo popen ---------------
     param = sys.argv[1:]
-    print(param)
 
     port = int(param[0])
     # --------------- --------------- --------------- ---------------
