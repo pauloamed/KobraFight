@@ -2,8 +2,8 @@ from . import Balancer
 
 debug = True
 class RoundRobin(Balancer):
-    def __init__(self, port, numInitServers):
-        super().__init__(port)
+    def __init__(self, port, maxClients, numInitServers):
+        super().__init__(port, maxClients)
 
         self.chosenServer = 0
 

@@ -16,10 +16,18 @@ def main():
 
     param = sys.argv[1:]
     port = int(param[0])
+    maxClients = int(param[1])
+    btype = param[2]
 
-    # balancer = RoundRobin(port, 2)
-    balancer = Balancer(port)
-    # signal.signal(signal.SIGINT, balancer.stop)
+    if btype == 'vanilla':
+        balancer = Balancer(port, maxClients)
+    elif btype == 'roundrobin':
+        numservers = int(param[3])
+        balancer = RoundRobin(port, maxClients, numservers)
+    else:
+        print(">>> Unknown param\n>>> Exiting")
+        exit()
+
     balancer.run()
 
 

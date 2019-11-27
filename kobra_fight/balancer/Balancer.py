@@ -11,7 +11,7 @@ import random
 debug = True
 
 class Balancer():
-    def __init__(self, port):
+    def __init__(self, port, maxClients):
 
         self.port = port
         self.host = 'localhost'
@@ -32,7 +32,7 @@ class Balancer():
 
         self.clientsReadList = []
 
-        self.maxPerServer = 2
+        self.maxPerServer = maxClients
         self.serverCount = 0
 
         self.createdThreads = []
